@@ -563,7 +563,6 @@ class TestMySQL(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
                 
-"""
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
@@ -572,6 +571,5 @@ if __name__ == '__main__':
         unittest.main()
         heap = hp.heapu()
         print heap
-"""        
         
         

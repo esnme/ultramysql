@@ -188,6 +188,37 @@ void API_deleteSocket(void *sock)
 	Py_DECREF( (PyObject *) sock);
 }
 
+int API_connectSocket(void *sock, const char *host, int port)
+{
+	PyObject *res;
+	PyObject *addrTuple;
+	PyObject *argList;
+	PyObject *connectStr;
+
+	PRINTMARK();
+
+	addrTuple = PyTuple_New(2);
+	PyTuple_SET_ITEM(addrTuple, 0, PyString_FromString(host));
+	PyTuple_SET_ITEM(addrTuple, 1, PyInt_FromLong(port));
+
+	connectStr = PyString_FromString("connect");
+	res = PyObject_CallMethodObjArgs( (PyObject *) sock, connectStr, addrTuple, NULL);
+
+	Py_DECREF(connectStr);
+	Py_DECREF(addrTuple);
+
+	if (res == NULL)
+	{
+		PRINTMARK();
+		return 0;
+	}
+
+	PRINTMARK();
+
+	Py_DECREF(res);
+	return 1;
+}
+
 int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 {
 	struct timeval tv;
