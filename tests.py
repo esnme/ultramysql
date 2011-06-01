@@ -65,6 +65,7 @@ import datetime
 import logging
 import unittest
 import gevent
+import gevent.socket
 import amysql
 
 DB_HOST = '127.0.0.1'
@@ -75,16 +76,6 @@ DB_DB = 'gevent_test'
 
 class TestMySQL(unittest.TestCase):
     log = logging.getLogger('TestMySQL')
-
-    def testConnectTwice(self):
-        cnn = amysql.Connection()
-        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-        try:
-            cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-            assert False, "Expected exception"
-        except(RuntimeError):
-            pass
-        pass
 
     def testMySQLTimeout(self):
         cnn = amysql.Connection()
@@ -106,6 +97,26 @@ class TestMySQL(unittest.TestCase):
             self.assertAlmostEqual(2.0, end - start, places = 1)
 
         cnn.close()
+
+    def testDoubleConnect(self):
+        cnn = amysql.Connection()
+        cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
+        time.sleep(11)
+        cnn.close()
+        time.sleep(1)
+        cnn = amysql.Connection()
+        cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
+
+    def testConnectTwice(self):
+        cnn = amysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+        try:
+            cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+            assert False, "Expected exception"
+        except(RuntimeError):
+            pass
+        pass
+
     def testParallelQuery(self):
 
         def query(s):
@@ -549,7 +560,6 @@ class TestMySQL(unittest.TestCase):
             rs = cnn.query("select test_mode, test_utf, test_latin1 from tblutf")
             result = rs.rows
             self.assertEquals(result, expected)
-
 if __name__ == '__main__':
     unittest.main()
                 

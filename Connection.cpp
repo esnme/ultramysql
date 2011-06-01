@@ -62,18 +62,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include "SHA1.h"
 #include <stdio.h>
+#include <time.h>
 
 #ifdef _WIN32
 #define snprintf _snprintf
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)		
+//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
 #define PRINTMARK() 		
 
 Connection::Connection (AMConnectionCAPI *_capi) 
 	:	m_reader(MYSQL_RX_BUFFER_SIZE)
 	, m_writer(MYSQL_TX_BUFFER_SIZE)
 {
+	PRINTMARK();
+
 	m_state = NONE;
 	m_sockfd = -1;
 	m_sockInst = NULL;
@@ -83,8 +86,11 @@ Connection::Connection (AMConnectionCAPI *_capi)
 
 Connection::~Connection()
 {
+	PRINTMARK();
+
 	if (m_sockInst)
 	{
+		PRINTMARK();
 		m_capi.closeSocket(m_sockInst);
 		m_capi.deleteSocket(m_sockInst);
 	}
@@ -188,9 +194,13 @@ bool Connection::writeSocket()
 
 bool Connection::close(void)
 {
+	PRINTMARK();
+
 	if (m_sockInst)
 	{
+		PRINTMARK();
 		m_capi.closeSocket(m_sockInst);
+
 		m_capi.deleteSocket(m_sockInst);
 		m_sockInst = NULL;
 		return true;
@@ -201,59 +211,15 @@ bool Connection::close(void)
 
 bool Connection::connectSocket()
 {
-	struct addrinfo *result = NULL;
-	if (getaddrinfo (m_host.c_str (), NULL, NULL, &result) == -1)
+	PRINTMARK();
+	if (!m_capi.connectSocket(m_sockInst, m_host.c_str(), m_port))
 	{
-		if (result != NULL)
-		{
-			freeaddrinfo(result);
-		}
-
-		setError("DNS lookup of host failed", 0);
+		PRINTMARK();
+		setError("Connection failed", 0);
 		return false;
 	}
 
-	struct addrinfo *res = NULL;
-
-	for (res = result; res != NULL; res = res->ai_next)
-	{
-		if (res->ai_addrlen == sizeof (struct sockaddr_in))
-		{
-			break;
-		}
-	}
-
-	if (res == NULL)
-	{
-		setError("Unable to resolve hostname", 0);
-		freeaddrinfo(result);
-		return false;
-	}
-
-
-	struct sockaddr_in remoteAddr;
-
-	memcpy (&remoteAddr, res->ai_addr, sizeof (struct sockaddr_in));
-
-	remoteAddr.sin_port = htons(m_port);
-
-	freeaddrinfo(result);
-	
-	if (::connect (m_sockfd, (sockaddr *) &remoteAddr, sizeof (sockaddr_in)) == -1)
-	{
-		if (SocketWouldBlock(m_sockfd))
-		{
-			return true;
-		}
-		if (SocketEINPROGRESS(m_sockfd))
-		{
-			return true;
-		}
-
-		setError("Connection failed", SocketGetLastError());
-		return false;
-	}
-
+	PRINTMARK();
 	return true;
 }
 
@@ -381,9 +347,10 @@ bool Connection::recvPacket()
 			break;
 		}
 
+		time_t tsStart = time (0);
+
 		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, AMC_READ, 10))
 		{
-			setError("Socket read timed out", 0);
 			return false;
 		}
 	}
@@ -426,8 +393,12 @@ void Connection::setError (const char *_message, int _errno)
 	m_errorMessage = _message;
 	m_errno = _errno;
 
+	PRINTMARK();
+
 	if (m_sockInst)
 	{
+		PRINTMARK();
+
 		m_capi.closeSocket(m_sockInst);
 		m_capi.deleteSocket(m_sockInst);
 		m_sockInst = NULL;
@@ -469,7 +440,7 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 
 	PRINTMARK();
 	m_sockInst = m_capi.createSocket(AF_INET, SOCK_STREAM, 0);
-
+	
 	if (m_sockInst == NULL)
 	{
 		setError("createSocket API returned NULL", 0);
@@ -479,15 +450,9 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 	PRINTMARK();
 	m_sockfd = m_capi.getSocketFD(m_sockInst);
 
+
 	if (!connectSocket())
 	{
-		return false;
-	}
-
-	PRINTMARK();
-	if (!m_capi.wouldBlock(m_sockInst, m_sockfd, AMC_WRITE, 10))
-	{
-		setError("Connection timed out", 0);
 		return false;
 	}
 

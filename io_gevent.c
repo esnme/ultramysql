@@ -81,7 +81,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define alloca _alloca
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)		
+//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
 #define PRINTMARK() 		
 
 void *API_createSocket(int family, int type, int proto)
@@ -172,9 +172,11 @@ int API_getSocketFD(void *sock)
 void API_closeSocket(void *sock)
 {
 	PyObject *res = PyObject_CallMethod( (PyObject *) sock, "close", NULL);
+	PRINTMARK();
 
 	if (res == NULL)
 	{
+		PyErr_Clear();
 		PRINTMARK();
 		return;
 	}
@@ -187,6 +189,37 @@ void API_deleteSocket(void *sock)
 	Py_DECREF( (PyObject *) sock);
 }
 
+int API_connectSocket(void *sock, const char *host, int port)
+{
+	PyObject *res;
+	PyObject *addrTuple;
+	PyObject *argList;
+	PyObject *connectStr;
+
+	PRINTMARK();
+
+	addrTuple = PyTuple_New(2);
+	PyTuple_SET_ITEM(addrTuple, 0, PyString_FromString(host));
+	PyTuple_SET_ITEM(addrTuple, 1, PyInt_FromLong(port));
+
+	connectStr = PyString_FromString("connect");
+	res = PyObject_CallMethodObjArgs( (PyObject *) sock, connectStr, addrTuple, NULL);
+
+	Py_DECREF(connectStr);
+	Py_DECREF(addrTuple);
+
+	if (res == NULL)
+	{
+		PRINTMARK();
+		return 0;
+	}
+
+	PRINTMARK();
+
+	Py_DECREF(res);
+	return 1;
+}
+
 int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 {
 	/* Setup gevent and yield to gevent hub */
@@ -196,7 +229,7 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 	static PyObject *waitread = NULL;
 	static PyObject *waitwrite = NULL;
 
-	PyObject *resObject = NULL;
+	PyObject *evtObject;
 	PyObject *argList;
 	PyObject *kwargList;
 
@@ -236,6 +269,9 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 	argList = PyTuple_New(1);
 	PyTuple_SET_ITEM(argList, 0, PyInt_FromLong(fd));
 	kwargList = PyDict_New();
+
+	//fprintf (stderr, "%s: Waiting for %d on %d %p with timeout %d\n", __FUNCTION__, (int) ops, fd, sock, timeout);
+
 	PyDict_SetItemString(kwargList, "timeout", PyInt_FromLong(timeout));
 
 	PRINTMARK();
@@ -245,13 +281,13 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 		case AMC_READ:
 			PRINTMARK();
 
-			resObject = PyObject_Call (waitread, argList, kwargList); 
+			evtObject = PyObject_Call (waitread, argList, kwargList); 
 			PRINTMARK();
 			break;
 
 		case AMC_WRITE:
 			PRINTMARK();
-			resObject = PyObject_Call (waitwrite, argList, kwargList); 
+			evtObject = PyObject_Call (waitwrite, argList, kwargList); 
 			PRINTMARK();
 			break;
 	}
@@ -259,14 +295,14 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 	Py_DECREF(argList);
 	Py_DECREF(kwargList);
 
-	if (resObject == NULL)
+	if (evtObject == NULL)
 	{
 		PRINTMARK();
 		return 0;
 	}
 
 	PRINTMARK();
-	Py_DECREF(resObject);
+	Py_DECREF(evtObject);
 	PRINTMARK();
 
 	return 1;

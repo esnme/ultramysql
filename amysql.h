@@ -84,6 +84,7 @@ typedef struct __AMConnectionCAPI
 	void (*deleteSocket)(void *instance);
 	void (*closeSocket)(void *instance);
 	int (*wouldBlock)(void *instance, int fd, int ops, int timeout);
+	int (*connectSocket)(void *sock, const char *host, int port);
 
 	void *(*createResult)(int columns);
 	void (*resultSetField)(void *result, int ifield, AMTypeInfo *ti, void *name, size_t cbName);

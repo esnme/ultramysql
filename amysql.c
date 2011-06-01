@@ -85,7 +85,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define alloca _alloca
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)		
+//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
 #define PRINTMARK() 		
 
 
@@ -120,10 +120,7 @@ int API_getSocketFD(void *sock);
 void API_closeSocket(void *sock);
 void API_deleteSocket(void *sock);
 int API_wouldBlock(void *sock, int fd, int ops, int timeout);
-
-
-
-
+int API_connectSocket(void *sock, const char *host, int port);
 
 void *API_createResult(int columns)
 {
@@ -653,6 +650,7 @@ AMConnectionCAPI capi = {
 	API_deleteSocket,
 	API_closeSocket,
 	API_wouldBlock,
+	API_connectSocket,
 	API_createResult,
 	API_resultSetField,
 	API_resultRowBegin,
@@ -1126,10 +1124,10 @@ static void Connection_Destructor(Connection *self)
 }
 
 static PyMethodDef Connection_methods[] = {
-	{"connect", (PyCFunction)			Connection_connect,			METH_VARARGS, ""},
-	{"query", (PyCFunction)				Connection_query,				METH_VARARGS, ""},
-	{"close", (PyCFunction)	Connection_close,	METH_NOARGS, ""},
-	{"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, ""},
+	{"connect", (PyCFunction)			Connection_connect,			METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
+	{"query", (PyCFunction)				Connection_query,				METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
+	{"close", (PyCFunction)	Connection_close,	METH_NOARGS, "Closes connection"},
+	{"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, "Check connection status"},
 	{NULL}
 };
 static PyMemberDef Connection_members[] = {
