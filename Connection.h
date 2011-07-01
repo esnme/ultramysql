@@ -105,6 +105,7 @@ private:
 
 	std::string m_errorMessage;
 	int m_errno;
+	int m_timeout;
 
 	AMConnectionCAPI m_capi;
 
@@ -123,6 +124,7 @@ public:
 	int getTxBufferSize();
 	bool isConnected(void);
 	bool close(void);
+	bool setTimeout(int timeout);
 
 protected:
 	void changeState(State _newState, const char *message);

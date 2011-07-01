@@ -107,33 +107,6 @@ class TestMySQL(unittest.TestCase):
         cnn = amysql.Connection()
         cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
 
-    def testConnectTwice(self):
-        cnn = amysql.Connection()
-        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-        try:
-            cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-            assert False, "Expected exception"
-        except(RuntimeError):
-            pass
-        pass
-
-    def testParallelQuery(self):
-
-        def query(s):
-            cnn = amysql.Connection()
-            cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-            cnn.query("select sleep(%d)" % s)
-            cnn.close()
-
-        start = time.time()
-        ch1 = gevent.spawn(query, 1)
-        ch2 = gevent.spawn(query, 2)
-        ch3 = gevent.spawn(query, 3)
-        gevent.joinall([ch1, ch2, ch3])
-
-        end = time.time()
-        self.assertAlmostEqual(3.0, end - start, places = 1)
-        
     def testConnectFails(self):
         cnn = amysql.Connection()
 
@@ -154,6 +127,53 @@ class TestMySQL(unittest.TestCase):
             pass
         pass
         
+    def testParallelQuery(self):
+
+        def query(s):
+            cnn = amysql.Connection()
+            cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+            cnn.query("select sleep(%d)" % s)
+            cnn.close()
+
+        start = time.time()
+        ch1 = gevent.spawn(query, 1)
+        ch2 = gevent.spawn(query, 2)
+        ch3 = gevent.spawn(query, 3)
+        gevent.joinall([ch1, ch2, ch3])
+
+        end = time.time()
+        self.assertAlmostEqual(3.0, end - start, places = 2)
+
+    def testConnectTimeout(self):
+        cnn = amysql.Connection()
+        cnn.settimeout(1)
+        
+        start = time.clock()
+        try:
+            cnn.connect (DB_HOST, 31481, DB_USER, DB_PASSWD, DB_DB)
+
+        except(RuntimeError):
+            elapsed = time.clock() - start
+
+            if (elapsed > 2):
+                assert False, "Timeout isn't working"
+            return
+        
+        assert False, "Expected expection"
+    
+ 
+        
+    def testConnectTwice(self):
+        cnn = amysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+        try:
+            cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+            assert False, "Expected exception"
+        except(RuntimeError):
+            pass
+        pass
+
+
         
     def testConnectClosed(self):
         cnn = amysql.Connection()
@@ -562,7 +582,8 @@ class TestMySQL(unittest.TestCase):
             self.assertEquals(result, expected)
 if __name__ == '__main__':
     unittest.main()
-                
+            
+"""            
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
@@ -571,5 +592,4 @@ if __name__ == '__main__':
         unittest.main()
         heap = hp.heapu()
         print heap
-        
-        
+"""        

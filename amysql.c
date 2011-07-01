@@ -121,6 +121,7 @@ void API_closeSocket(void *sock);
 void API_deleteSocket(void *sock);
 int API_wouldBlock(void *sock, int fd, int ops, int timeout);
 int API_connectSocket(void *sock, const char *host, int port);
+int API_setTimeout(void *sock, int timeoutSec);
 
 void *API_createResult(int columns)
 {
@@ -651,6 +652,7 @@ AMConnectionCAPI capi = {
 	API_closeSocket,
 	API_wouldBlock,
 	API_connectSocket,
+	API_setTimeout,
 	API_createResult,
 	API_resultSetField,
 	API_resultRowBegin,
@@ -672,6 +674,24 @@ int Connection_init(Connection *self, PyObject *arg)
 
 	return 0;
 }
+
+PyObject *Connection_setTimeout(Connection *self, PyObject *args)
+{
+	int timeout;
+
+	if (!PyArg_ParseTuple (args, "i", &timeout))
+	{
+		return NULL;
+	}
+
+	if (!AMConnection_SetTimeout(self->conn, timeout))
+	{
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}	
+
 
 PyObject *Connection_isConnected(Connection *self, PyObject *args)
 {
@@ -1128,6 +1148,7 @@ static PyMethodDef Connection_methods[] = {
 	{"query", (PyCFunction)				Connection_query,				METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
 	{"close", (PyCFunction)	Connection_close,	METH_NOARGS, "Closes connection"},
 	{"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, "Check connection status"},
+	{"settimeout", (PyCFunction) Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},
 	{NULL}
 };
 static PyMemberDef Connection_members[] = {

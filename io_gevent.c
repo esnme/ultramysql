@@ -60,6 +60,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <amysql.h>
 #include <Python.h>
 #include <stdio.h>
+#include <time.h>
 
 #ifndef TRUE
 #define TRUE 1
@@ -141,6 +142,33 @@ void *API_createSocket(int family, int type, int proto)
 	return sockobj;
 }
 
+int API_setTimeout(void *sock, int timeoutSec)
+{
+	PyObject *intobj;
+	PyObject *retobj;
+	PyObject *methodObj;
+
+	PRINTMARK();
+	intobj = PyFloat_FromDouble( (double) timeoutSec);
+
+	methodObj = PyString_FromString("settimeout");
+	PRINTMARK();
+	retobj = PyObject_CallMethodObjArgs ((PyObject *) sock, methodObj, intobj, NULL);
+	Py_DECREF(intobj);
+	Py_DECREF(methodObj);
+	PRINTMARK();
+
+	if (retobj == NULL)
+	{
+		PyErr_Clear();
+		return 0;
+	}
+
+	Py_DECREF(retobj);
+	return 1;
+
+}   
+
 int API_getSocketFD(void *sock)
 {
 	int ret;
@@ -203,8 +231,9 @@ int API_connectSocket(void *sock, const char *host, int port)
 	PyTuple_SET_ITEM(addrTuple, 1, PyInt_FromLong(port));
 
 	connectStr = PyString_FromString("connect");
+  
 	res = PyObject_CallMethodObjArgs( (PyObject *) sock, connectStr, addrTuple, NULL);
-
+    
 	Py_DECREF(connectStr);
 	Py_DECREF(addrTuple);
 

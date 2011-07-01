@@ -84,6 +84,11 @@ EXPORT_ATTR int AMConnection_Connect (AMConnection conn, const char *_host, int 
 	return ((Connection *)conn)->connect(_host, _port, _username, _password, _database, _autoCommit, (MYSQL_CHARSETS) _charset) ? 1 : 0;
 }
 
+EXPORT_ATTR int AMConnection_SetTimeout(AMConnection conn, int timeout)
+{
+	return ((Connection *)conn)->setTimeout(timeout) ? 1 : 0;
+}
+
 EXPORT_ATTR int AMConnection_GetLastError (AMConnection conn, const char **_ppOutMessage, int *_outErrno)
 {
 	return ((Connection *)conn)->getLastError(_ppOutMessage, _outErrno) ? 1 : 0;
@@ -108,3 +113,4 @@ EXPORT_ATTR int AMConnection_Close (AMConnection conn)
 {
 	return ((Connection *)conn)->close() ? 1 : 0;
 }
+

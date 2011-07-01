@@ -142,6 +142,34 @@ void *API_createSocket(int family, int type, int proto)
 	return sockobj;
 }
 
+int API_setTimeout(void *sock, int timeoutSec)
+{
+	PyObject *intobj;
+	PyObject *retobj;
+	PyObject *methodObj;
+
+	PRINTMARK();
+	intobj = PyFloat_FromDouble( (double) timeoutSec);
+
+	methodObj = PyString_FromString("settimeout");
+	PRINTMARK();
+	retobj = PyObject_CallMethodObjArgs ((PyObject *) sock, methodObj, intobj, NULL);
+	Py_DECREF(intobj);
+	Py_DECREF(methodObj);
+	PRINTMARK();
+
+	if (retobj == NULL)
+	{
+		PyErr_Clear();
+		return 0;
+	}
+
+	Py_DECREF(retobj);
+	return 1;
+
+}   
+
+
 int API_getSocketFD(void *sock)
 {
 	int ret;

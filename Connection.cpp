@@ -77,6 +77,7 @@ Connection::Connection (AMConnectionCAPI *_capi)
 {
 	PRINTMARK();
 
+	m_timeout = -1;
 	m_state = NONE;
 	m_sockfd = -1;
 	m_sockInst = NULL;
@@ -349,7 +350,7 @@ bool Connection::recvPacket()
 
 		time_t tsStart = time (0);
 
-		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, AMC_READ, 10))
+		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, AMC_READ, m_timeout == -1 ? 10 : m_timeout))
 		{
 			return false;
 		}
@@ -378,7 +379,7 @@ bool Connection::sendPacket()
 			break;
 		}
 
-		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, AMC_WRITE, 10))
+		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, AMC_WRITE, m_timeout == -1 ? 10 : m_timeout))
 		{
 			setError("Socket write timed out", 0);
 			return false;
@@ -445,6 +446,15 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 	{
 		setError("createSocket API returned NULL", 0);
 		return false;
+	}
+
+	if (m_timeout != -1)
+	{
+		if (!setTimeout (m_timeout))
+		{
+			setError("setTimeout API failed", 0);
+			return false;
+		}
 	}
 
 	PRINTMARK();
@@ -735,4 +745,19 @@ int Connection::getRxBufferSize()
 int Connection::getTxBufferSize()
 {
 	return (int) m_writer.getSize();
+}
+
+bool Connection::setTimeout(int timeout)
+{
+	m_timeout = timeout;
+
+	if (m_sockInst)
+	{
+		if (!m_capi.setTimeout(m_sockInst, timeout))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }

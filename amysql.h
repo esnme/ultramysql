@@ -85,6 +85,7 @@ typedef struct __AMConnectionCAPI
 	void (*closeSocket)(void *instance);
 	int (*wouldBlock)(void *instance, int fd, int ops, int timeout);
 	int (*connectSocket)(void *sock, const char *host, int port);
+	int (*setTimeout)(void *sock, int timeout);
 
 	void *(*createResult)(int columns);
 	void (*resultSetField)(void *result, int ifield, AMTypeInfo *ti, void *name, size_t cbName);
@@ -93,6 +94,8 @@ typedef struct __AMConnectionCAPI
 	void (*resultRowEnd)(void *result);
 	void (*destroyResult)(void *result);
 	void *(*resultOK)(UINT64 affected, UINT64 insertId, int serverStatus, const char *message, size_t len);
+
+
 } AMConnectionCAPI;
 
 
@@ -115,5 +118,6 @@ int AMConnection_GetTxBufferSize (AMConnection conn);
 int AMConnection_GetRxBufferSize (AMConnection conn);
 int AMConnection_IsConnected (AMConnection conn);
 int AMConnection_Close (AMConnection conn);
+int AMConnection_SetTimeout(AMConnection conn, int timeout);
 
 #endif
