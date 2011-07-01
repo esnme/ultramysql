@@ -85,8 +85,13 @@ module1 = Extension('amysql',
                 define_macros=[('WIN32_LEAN_AND_MEAN', None)])
 					
 setup (name = 'amysql',
-       version = '1.0',
-       description = '',
-       ext_modules = [module1])
-       
+		version = '1.1',
+		description = 'Ultra fast MySQL driver for Python',
+		ext_modules = [module1],
+		author = "Jonas Tarnstrom",
+		author_email = "jonas.tarnstrom@esn.me",
+		maintainer = "Jonas Tarnstrom",
+		maintainer_email = "jonas.tarnstrom@esn.me",
+		license = "BSD")
+
        
