@@ -142,7 +142,7 @@ class TestMySQL(unittest.TestCase):
         gevent.joinall([ch1, ch2, ch3])
 
         end = time.time()
-        self.assertAlmostEqual(3.0, end - start, places = 2)
+        self.assertAlmostEqual(3.0, end - start, places = 0)
 
     def testConnectTimeout(self):
         cnn = amysql.Connection()
