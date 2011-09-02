@@ -200,8 +200,16 @@ bool Connection::close(void)
 	if (m_sockInst)
 	{
 		PRINTMARK();
-		m_capi.closeSocket(m_sockInst);
 
+		if (m_writer.isDone())
+		{
+			m_writer.reset();
+			m_writer.writeByte(MC_QUIT);
+			m_writer.finalize(0);
+			sendPacket();
+		}
+
+		m_capi.closeSocket(m_sockInst);
 		m_capi.deleteSocket(m_sockInst);
 		m_sockInst = NULL;
 		return true;

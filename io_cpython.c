@@ -270,8 +270,9 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 			FD_SET (fd, &writeSet);
 			break;
 	}
-
+	Py_BEGIN_ALLOW_THREADS
 	result = select (fd + 1, &readSet, &writeSet, NULL, &tv);
+	Py_END_ALLOW_THREADS    
 
 	if (result < 1)
 	{
