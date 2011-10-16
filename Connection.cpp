@@ -465,7 +465,6 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 	if (m_sockInst == NULL)
 	{
 		m_dbgMethodProgress --;
-		setError("createSocket API returned NULL", 0);
 		return false;
 	}
 
@@ -726,8 +725,6 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 		m_dbgMethodProgress --;
 		return NULL;
 	}
-
-
 
 	if (m_sockInst == NULL)
 	{
