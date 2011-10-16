@@ -147,6 +147,44 @@ class TestMySQL(unittest.TestCase):
             pass
         pass
         
+    def testConcurrencyQueryError(self):
+        connection = amysql.Connection()
+        connection.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+        errorCount = [ 0 ]
+
+        def query(cnn):
+            try:
+                cnn.query("select sleep(5)")
+            except(RuntimeError):
+                errorCount[0] = errorCount[0] + 1
+                return
+
+        ch1 = gevent.spawn(query, connection)
+        ch2 = gevent.spawn(query, connection)
+        ch3 = gevent.spawn(query, connection)
+        gevent.joinall([ch1, ch2, ch3])
+        
+        self.assertTrue(errorCount[0] > 0)
+
+    def testConcurrencyConnectError(self):
+        connection = amysql.Connection()
+        errorCount = [ 0 ]
+
+        def query(cnn):
+            try:
+                cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+            except(RuntimeError):
+                errorCount[0] = errorCount[0] + 1
+                return
+
+        ch1 = gevent.spawn(query, connection)
+        ch2 = gevent.spawn(query, connection)
+        ch3 = gevent.spawn(query, connection)
+        gevent.joinall([ch1, ch2, ch3])
+        
+        self.assertTrue(errorCount[0] > 0)
+
+        
     def testParallelQuery(self):
 
         def query(s):

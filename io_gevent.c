@@ -221,7 +221,6 @@ int API_connectSocket(void *sock, const char *host, int port)
 {
 	PyObject *res;
 	PyObject *addrTuple;
-	PyObject *argList;
 	PyObject *connectStr;
 
 	PRINTMARK();
@@ -269,6 +268,8 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 
 		if (sockmodule == NULL)
 		{
+			fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
+
 			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> Could not import gevent.socket");
 			return -1;
 		}
@@ -278,12 +279,16 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 
 		if (waitread == NULL || waitwrite == NULL)
 		{
+			fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
+
 			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> Could not import wait_read or wait_write");
 			return -1;
 		}
 
 		if (!PyFunction_Check(waitread) || !PyFunction_Check(waitwrite))
 		{
+			fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
+
 			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> wait_read or wait_write are not callable");
 			return -1;
 		}
@@ -327,6 +332,8 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 	{
 		if (!PyErr_Occurred())
 		{
+			fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
+
 			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Exception is not set with wait operation %d", (int) ops);
 			return 0;
 		}
@@ -341,6 +348,8 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 
 	if (PyErr_Occurred())
 	{
+		fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
+
 		PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Exception is set without error happening");
 		return 0;
 	}

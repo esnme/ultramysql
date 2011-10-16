@@ -788,6 +788,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 		}
 
 		// Should not happen!
+		fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
 		return PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> No error set from connect call");
 	}
 
@@ -1128,6 +1129,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 		}
 
 		// Should not happen!
+		fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
 		return PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> No error set from query call");
 	}
 

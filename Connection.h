@@ -109,7 +109,7 @@ private:
 
 	AMConnectionCAPI m_capi;
 
-	int m_dbgQueriesInProgress;
+	int m_dbgMethodProgress;
 
 public:
 

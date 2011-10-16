@@ -83,7 +83,7 @@ Connection::Connection (AMConnectionCAPI *_capi)
 	m_sockInst = NULL;
 	m_errno = -1;
 	memcpy (&m_capi, _capi, sizeof (AMConnectionCAPI));
-	m_dbgQueriesInProgress = 0;
+	m_dbgMethodProgress = 0;
 }
 
 Connection::~Connection()
@@ -370,7 +370,7 @@ bool Connection::recvPacket()
 
 bool Connection::isConnected(void)
 {
-	return (m_sockInst);
+	return (m_sockInst != NULL);
 }
 
 
@@ -407,7 +407,6 @@ void Connection::setError (const char *_message, int _errno)
 	if (m_sockInst)
 	{
 		PRINTMARK();
-
 		m_capi.closeSocket(m_sockInst);
 		m_capi.deleteSocket(m_sockInst);
 		m_sockInst = NULL;
@@ -433,8 +432,23 @@ bool Connection::getLastError (const char **_ppOutMessage, int *_outErrno)
 
 bool Connection::connect(const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, MYSQL_CHARSETS _charset)
 {
+	m_dbgMethodProgress ++;
+
+	if (m_dbgMethodProgress > 1)
+	{
+		fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
+		/*
+		NOTE: We don't call setError here because it will close the socket worsening the concurrent access error making it impossible to trace */
+		m_errorMessage = "Concurrent access in connect method";
+		m_errno = 0;
+		m_dbgMethodProgress --;
+		return false;
+	}
+
+
 	if (m_sockInst != NULL)
 	{
+		m_dbgMethodProgress --;
 		setError ("Socket already connected", 0);
 		return false;
 	}
@@ -444,7 +458,7 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 	m_username = _username ? _username : "";
 	m_password = _password ? _password : "";
 	m_database = _database ? _database : "";
-	m_autoCommit = _autoCommit;
+	m_autoCommit = _autoCommit ? (*_autoCommit) != 0 : false;
 	m_charset = _charset;
 
 	PRINTMARK();
@@ -452,6 +466,7 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 	
 	if (m_sockInst == NULL)
 	{
+		m_dbgMethodProgress --;
 		setError("createSocket API returned NULL", 0);
 		return false;
 	}
@@ -460,6 +475,7 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 	{
 		if (!setTimeout (m_timeout))
 		{
+			m_dbgMethodProgress --;
 			setError("setTimeout API failed", 0);
 			return false;
 		}
@@ -471,24 +487,28 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 
 	if (!connectSocket())
 	{
+		m_dbgMethodProgress --;
 		return false;
 	}
 
 	PRINTMARK();
 	if (!recvPacket())
 	{
+		m_dbgMethodProgress --;
 		return false;
 	}
 
 	PRINTMARK();
 	if (!processHandshake())
 	{
+		m_dbgMethodProgress --;
 		return false;
 	}
 
 	PRINTMARK();
 	if (!sendPacket())
 	{
+		m_dbgMethodProgress --;
 		return false;
 	}
 
@@ -497,6 +517,7 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 
 	if (!recvPacket())
 	{
+		m_dbgMethodProgress --;
 		return false;
 	}
 
@@ -505,6 +526,7 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 	if (result == 0xff)
 	{
 		handleErrorPacket();
+		m_dbgMethodProgress --;
 		return false;
 	}
 	
@@ -526,12 +548,14 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 		PRINTMARK();
 		if (!sendPacket())
 		{
+			m_dbgMethodProgress --;
 			return false;
 		}
 
 		PRINTMARK();
 		if (!recvPacket())
 		{
+			m_dbgMethodProgress --;
 			return false;
 		}
 		m_reader.skip();
@@ -539,6 +563,8 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 
 	PRINTMARK();
 	m_state = QUERY_WAIT;
+	m_dbgMethodProgress --;
+
 	return true;
 }
 
@@ -689,30 +715,37 @@ void *Connection::handleResultPacket(int _fieldCount)
 
 void *Connection::query(const char *_query, size_t _cbQuery)
 {
-	m_dbgQueriesInProgress ++;
+	m_dbgMethodProgress ++;
 
-	if (m_dbgQueriesInProgress > 1)
+	if (m_dbgMethodProgress > 1)
 	{
-		setError ("Concurrent access to Connection object", 0);
-		m_dbgQueriesInProgress --;
-		return false;
+		fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
+
+		/*
+		NOTE: We don't call setError here because it will close the socket worsening the concurrent access error making it impossible to trace */
+		m_errorMessage = "Concurrent access in query method";
+		m_errno = 0;
+		m_dbgMethodProgress --;
+		return NULL;
 	}
 
 
 
 	if (m_sockInst == NULL)
 	{
+		PRINTMARK();
 		setError ("Not connected", 0);
-		m_dbgQueriesInProgress --;
-		return false;
+		m_dbgMethodProgress --;
+		return NULL;
 	}
 
 	size_t len = _cbQuery;
 
 	if (len > m_writer.getSize () - (MYSQL_PACKET_HEADER_SIZE + 1))
 	{
+		PRINTMARK();
 		setError ("Query too big", 0);
-		m_dbgQueriesInProgress --;
+		m_dbgMethodProgress --;
 		return NULL;
 	}
 
@@ -723,13 +756,15 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 
 	if (!sendPacket())
 	{
-		m_dbgQueriesInProgress --;
+		PRINTMARK();
+		m_dbgMethodProgress --;
 		return NULL;
 	}
 
 	if (!recvPacket())
 	{
-		m_dbgQueriesInProgress --;
+		PRINTMARK();
+		m_dbgMethodProgress --;
 		return NULL;
 	}
 
@@ -739,28 +774,30 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 	{
 		case 0x00:
 			PRINTMARK();
-			m_dbgQueriesInProgress --;
+			m_dbgMethodProgress --;
 			return handleOKPacket();
 
 		case 0xff:
 			PRINTMARK();
 			handleErrorPacket();
-			m_dbgQueriesInProgress --;
+			m_dbgMethodProgress --;
 			return NULL;
 
 		case 0xfe:
 			PRINTMARK();
 			setError ("Unexpected EOF when decoding result", 0);
-			m_dbgQueriesInProgress --;
+			m_dbgMethodProgress --;
 			return NULL;
 
 
 		default:
-			m_dbgQueriesInProgress --;
+			PRINTMARK();
+			m_dbgMethodProgress --;
 			return handleResultPacket((int)result);
 	}
 	
-	m_dbgQueriesInProgress --;
+	PRINTMARK();
+	m_dbgMethodProgress --;
 	return NULL;
 }
 
