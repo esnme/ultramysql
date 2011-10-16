@@ -127,13 +127,32 @@ class TestMySQL(unittest.TestCase):
         cnn = amysql.Connection()
         cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
 
+    def testConnectTimeout(self):
+        cnn = amysql.Connection()
+        cnn.settimeout(1)
+        
+        start = time.clock()
+        try:
+            cnn.connect (DB_HOST, 31481, DB_USER, DB_PASSWD, DB_DB)
+
+        except(gevent.socket.error):
+            elapsed = time.clock() - start
+
+            if (elapsed > 2):
+                assert False, "Timeout isn't working"
+            return
+        
+        assert False, "Expected expection"
+        
+    
+    
     def testConnectFails(self):
         cnn = amysql.Connection()
 
         try:
             cnn.connect (DB_HOST, 31337, DB_USER, DB_PASSWD, DB_DB)
             assert False, "Expected exception"
-        except(RuntimeError):
+        except(gevent.socket.error):
             pass
         pass
 
@@ -143,7 +162,7 @@ class TestMySQL(unittest.TestCase):
         try:
             cnn.connect ("thisplaceisnowere", 31337, DB_USER, DB_PASSWD, DB_DB)
             assert False, "Expected exception"
-        except(RuntimeError):
+        except(gevent.socket.error):
             pass
         pass
         
@@ -202,23 +221,7 @@ class TestMySQL(unittest.TestCase):
         end = time.time()
         self.assertAlmostEqual(3.0, end - start, places = 0)
 
-    def testConnectTimeout(self):
-        cnn = amysql.Connection()
-        cnn.settimeout(1)
-        
-        start = time.clock()
-        try:
-            cnn.connect (DB_HOST, 31481, DB_USER, DB_PASSWD, DB_DB)
 
-        except(RuntimeError):
-            elapsed = time.clock() - start
-
-            if (elapsed > 2):
-                assert False, "Timeout isn't working"
-            return
-        
-        assert False, "Expected expection"
-    
  
         
     def testConnectTwice(self):
