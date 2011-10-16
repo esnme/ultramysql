@@ -224,8 +224,6 @@ bool Connection::connectSocket()
 	PRINTMARK();
 	if (!m_capi.connectSocket(m_sockInst, m_host.c_str(), m_port))
 	{
-		PRINTMARK();
-		setError("Connection failed", 0);
 		return false;
 	}
 
