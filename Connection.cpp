@@ -83,6 +83,7 @@ Connection::Connection (AMConnectionCAPI *_capi)
 	m_sockInst = NULL;
 	m_errno = -1;
 	memcpy (&m_capi, _capi, sizeof (AMConnectionCAPI));
+	m_dbgQueriesInProgress = 0;
 }
 
 Connection::~Connection()
@@ -389,7 +390,6 @@ bool Connection::sendPacket()
 
 		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, AMC_WRITE, m_timeout == -1 ? 10 : m_timeout))
 		{
-			setError("Socket write timed out", 0);
 			return false;
 		}
 	}
@@ -689,9 +689,21 @@ void *Connection::handleResultPacket(int _fieldCount)
 
 void *Connection::query(const char *_query, size_t _cbQuery)
 {
+	m_dbgQueriesInProgress ++;
+
+	if (m_dbgQueriesInProgress > 1)
+	{
+		setError ("Concurrent access to Connection object", 0);
+		m_dbgQueriesInProgress --;
+		return false;
+	}
+
+
+
 	if (m_sockInst == NULL)
 	{
 		setError ("Not connected", 0);
+		m_dbgQueriesInProgress --;
 		return false;
 	}
 
@@ -700,6 +712,7 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 	if (len > m_writer.getSize () - (MYSQL_PACKET_HEADER_SIZE + 1))
 	{
 		setError ("Query too big", 0);
+		m_dbgQueriesInProgress --;
 		return NULL;
 	}
 
@@ -710,11 +723,13 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 
 	if (!sendPacket())
 	{
+		m_dbgQueriesInProgress --;
 		return NULL;
 	}
 
 	if (!recvPacket())
 	{
+		m_dbgQueriesInProgress --;
 		return NULL;
 	}
 
@@ -724,23 +739,28 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 	{
 		case 0x00:
 			PRINTMARK();
+			m_dbgQueriesInProgress --;
 			return handleOKPacket();
 
 		case 0xff:
 			PRINTMARK();
 			handleErrorPacket();
+			m_dbgQueriesInProgress --;
 			return NULL;
 
 		case 0xfe:
 			PRINTMARK();
 			setError ("Unexpected EOF when decoding result", 0);
+			m_dbgQueriesInProgress --;
 			return NULL;
 
 
 		default:
+			m_dbgQueriesInProgress --;
 			return handleResultPacket((int)result);
 	}
 	
+	m_dbgQueriesInProgress --;
 	return NULL;
 }
 

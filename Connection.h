@@ -109,6 +109,8 @@ private:
 
 	AMConnectionCAPI m_capi;
 
+	int m_dbgQueriesInProgress;
+
 public:
 
 

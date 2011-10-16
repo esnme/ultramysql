@@ -76,6 +76,26 @@ DB_DB = 'gevent_test'
 
 class TestMySQL(unittest.TestCase):
     log = logging.getLogger('TestMySQL')
+    
+    def testUnique(self):
+        cnn = amysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+
+        cnn.query("drop table if exists tblunique")
+        cnn.query("create table tblunique (name VARCHAR(32) UNIQUE)")
+
+        # We insert the same character using two different encodings
+        cnn.query("insert into tblunique set name=\"kaka\"")
+
+        count = 0
+        
+        for x in xrange(0, 10):
+            try:
+                cnn.query("insert into tblunique set name=\"kaka\"")
+            except(RuntimeError):
+                count = count + 1
+            
+        self.assertEquals(count, 10)
 
     def testMySQLTimeout(self):
         cnn = amysql.Connection()
@@ -580,6 +600,7 @@ class TestMySQL(unittest.TestCase):
             rs = cnn.query("select test_mode, test_utf, test_latin1 from tblutf")
             result = rs.rows
             self.assertEquals(result, expected)
+
 if __name__ == '__main__':
     unittest.main()
             

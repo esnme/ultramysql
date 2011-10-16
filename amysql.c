@@ -781,8 +781,14 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 			return PyErr_Format(PyExc_RuntimeError, "%s (%d)", errorMessage, errCode);
 		}
 
+		if (PyErr_Occurred())
+		{
+			PRINTMARK();
+			return NULL;
+		}
+
 		// Should not happen!
-		return NULL;
+		return PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> No error set from connect call");
 	}
 
 	Py_RETURN_NONE;
@@ -1122,8 +1128,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 		}
 
 		// Should not happen!
-		PRINTMARK();
-		return NULL;
+		return PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> No error set from query call");
 	}
 
 	PRINTMARK();
