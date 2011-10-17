@@ -722,6 +722,7 @@ PyObject *PyUnicode_EncodeCP1250Helper(const Py_UNICODE *data, Py_ssize_t length
 
 PyObject *HandleError(Connection *self, const char *funcName)
 {
+	PyObject *value;
 	const char *errorMessage;
 	int errCode;
 	int errType;
@@ -731,15 +732,21 @@ PyObject *HandleError(Connection *self, const char *funcName)
 		switch (errType)
 		{
 			case AME_OTHER:
-				PyErr_SetObject(amysql_Error, Py_BuildValue("(i,s)", errCode, errorMessage));
+				value = Py_BuildValue("(i,s)", errCode, errorMessage);
+				PyErr_SetObject(amysql_Error, value);
+				Py_DECREF(value);
 				return NULL;
 
 			case AME_MYSQL:
-				PyErr_SetObject(amysql_SQLError, Py_BuildValue("(i,s)", errCode, errorMessage));
+				value = Py_BuildValue("(i,s)", errCode, errorMessage);
+				PyErr_SetObject(amysql_SQLError, value);
+				Py_DECREF(value);
 				return NULL;
 		}
 
-		PyErr_SetObject(PyExc_RuntimeError, Py_BuildValue("(s, s)", funcName, "Should not happen"));
+		value = Py_BuildValue("(s, s)", funcName, "Should not happen");
+		PyErr_SetObject(PyExc_RuntimeError, value);
+		Py_DECREF(value);
 		return NULL;
 	}
 
@@ -748,7 +755,10 @@ PyObject *HandleError(Connection *self, const char *funcName)
 		return NULL;
 	}
 
-	PyErr_SetObject(PyExc_RuntimeError, Py_BuildValue("(s, s)", funcName, "No error or Python error specified"));
+	value = Py_BuildValue("(s, s)", funcName, "No error or Python error specified");
+	PyErr_SetObject(PyExc_RuntimeError, value);
+	Py_DECREF(value);
+	return NULL;
 }
 
 

@@ -92,7 +92,7 @@ class TestMySQL(unittest.TestCase):
         try:
             cnn.query("insert into tblunique set name=\"kaka\"")
             self.fail('expected timeout')
-        except(amysql.SQLError):
+        except amysql.SQLError, e:
             pass
         cnn.query("select * from tblunique")
 
@@ -164,6 +164,8 @@ class TestMySQL(unittest.TestCase):
         except(gevent.socket.error):
             pass
         pass
+        
+
         
     def testConcurrentQueryError(self):
         connection = amysql.Connection()
@@ -641,10 +643,10 @@ class TestMySQL(unittest.TestCase):
             result = rs.rows
             self.assertEquals(result, expected)
 
+
 if __name__ == '__main__':
     unittest.main()
-            
-"""            
+"""
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
@@ -653,4 +655,4 @@ if __name__ == '__main__':
         unittest.main()
         heap = hp.heapu()
         print heap
-"""        
+"""
