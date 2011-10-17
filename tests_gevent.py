@@ -89,13 +89,12 @@ class TestMySQL(unittest.TestCase):
 
         count = 0
         
-        for x in xrange(0, 10):
-            try:
-                cnn.query("insert into tblunique set name=\"kaka\"")
-            except(RuntimeError):
-                count = count + 1
-            
-        self.assertEquals(count, 10)
+        try:
+            cnn.query("insert into tblunique set name=\"kaka\"")
+            self.fail('expected timeout')
+        except(amysql.SQLError):
+            pass
+        cnn.query("select * from tblunique")
 
     def testMySQLTimeout(self):
         cnn = amysql.Connection()
@@ -166,15 +165,15 @@ class TestMySQL(unittest.TestCase):
             pass
         pass
         
-    def testConcurrencyQueryError(self):
+    def testConcurrentQueryError(self):
         connection = amysql.Connection()
         connection.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
         errorCount = [ 0 ]
 
         def query(cnn):
             try:
-                cnn.query("select sleep(5)")
-            except(RuntimeError):
+                cnn.query("select sleep(1)")
+            except(amysql.Error):
                 errorCount[0] = errorCount[0] + 1
                 return
 
@@ -185,14 +184,14 @@ class TestMySQL(unittest.TestCase):
         
         self.assertTrue(errorCount[0] > 0)
 
-    def testConcurrencyConnectError(self):
+    def testConcurrentConnectError(self):
         connection = amysql.Connection()
         errorCount = [ 0 ]
 
         def query(cnn):
             try:
                 cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-            except(RuntimeError):
+            except(amysql.Error):
                 errorCount[0] = errorCount[0] + 1
                 return
 
@@ -230,7 +229,7 @@ class TestMySQL(unittest.TestCase):
         try:
             cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
             assert False, "Expected exception"
-        except(RuntimeError):
+        except(amysql.Error):
             pass
         pass
 

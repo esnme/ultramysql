@@ -92,6 +92,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static PyTypeObject ConnectionType;
 static PyTypeObject ResultSetType;
 
+PyObject *amysql_Error;
+PyObject *amysql_SQLError;
+
 typedef struct {
 	PyObject_HEAD
 	PyObject *fields; 
@@ -108,6 +111,9 @@ typedef struct {
 	PyObject_HEAD
 	AMConnection conn;
 	int sockfd;
+
+	PyObject *Error;
+	PyObject *SQLError;
 
 	int txBufferSize;
 	int rxBufferSize;
@@ -151,6 +157,9 @@ void API_resultRowBegin(void *result)
 	((ResultSet *)result)->currRow = PyTuple_New(((ResultSet *)result)->numFields);	
 	PRINTMARK();
 }
+
+PyObject *HandleError(Connection *self, const char *funcName);
+
 
 INT32 parseINT32(char *start, char *end)
 {
@@ -669,6 +678,8 @@ int Connection_init(Connection *self, PyObject *arg)
 
 	self->rxBufferSize = AMConnection_GetRxBufferSize (self->conn);
 	self->txBufferSize = AMConnection_GetTxBufferSize (self->conn);
+	self->Error = amysql_Error;
+	self->SQLError = amysql_SQLError;
 
 	self->PFN_PyUnicode_Encode = NULL;
 
@@ -686,7 +697,7 @@ PyObject *Connection_setTimeout(Connection *self, PyObject *args)
 
 	if (!AMConnection_SetTimeout(self->conn, timeout))
 	{
-		return NULL;
+		return HandleError(self, "setTimeout");
 	}
 
 	Py_RETURN_NONE;
@@ -708,6 +719,40 @@ PyObject *PyUnicode_EncodeCP1250Helper(const Py_UNICODE *data, Py_ssize_t length
 	return PyUnicode_Encode (data, length, "cp1250", errors);
 }
 
+
+PyObject *HandleError(Connection *self, const char *funcName)
+{
+	const char *errorMessage;
+	int errCode;
+	int errType;
+
+	if (AMConnection_GetLastError (self->conn, &errorMessage, &errCode, &errType))
+	{
+		switch (errType)
+		{
+			case AME_OTHER:
+				PyErr_SetObject(amysql_Error, Py_BuildValue("(i,s)", errCode, errorMessage));
+				return NULL;
+
+			case AME_MYSQL:
+				PyErr_SetObject(amysql_SQLError, Py_BuildValue("(i,s)", errCode, errorMessage));
+				return NULL;
+		}
+
+		PyErr_SetObject(PyExc_RuntimeError, Py_BuildValue("(s, s)", funcName, "Should not happen"));
+		return NULL;
+	}
+
+	if (PyErr_Occurred())
+	{
+		return NULL;
+	}
+
+	PyErr_SetObject(PyExc_RuntimeError, Py_BuildValue("(s, s)", funcName, "No error or Python error specified"));
+}
+
+
+
 PyObject *Connection_connect(Connection *self, PyObject *args)
 {
 	/*
@@ -719,8 +764,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 	char *username;
 	char *password;
 	char *database;
-	const char *errorMessage;
-	int errCode;
+
 	int autoCommit;
 	char *pstrCharset = NULL;
 	int charset = MCS_UNDEFINED;
@@ -776,20 +820,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 
 	if (!AMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, charset))
 	{
-		if (AMConnection_GetLastError (self->conn, &errorMessage, &errCode))
-		{
-			return PyErr_Format(PyExc_RuntimeError, "%s (%d)", errorMessage, errCode);
-		}
-
-		if (PyErr_Occurred())
-		{
-			PRINTMARK();
-			return NULL;
-		}
-
-		// Should not happen!
-		fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
-		return PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> No error set from connect call");
+		return HandleError(self, "connect");
 	}
 
 	Py_RETURN_NONE;
@@ -1062,7 +1093,6 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 
 	if (!PyArg_ParseTuple (args, "O|O", &inQuery, &iterable))
 	{
-		PRINTMARK();
 		return NULL;
 	}
 
@@ -1113,24 +1143,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 	PRINTMARK();
 	if (ret == NULL)
 	{
-		const char *errorMessage;
-		int errCode;
-
-		if (PyErr_Occurred())
-		{
-			PRINTMARK();
-			return NULL;
-		}
-
-		if (AMConnection_GetLastError(self->conn, &errorMessage, &errCode))
-		{
-			PRINTMARK();
-			return PyErr_Format(PyExc_RuntimeError, "%s (%d)", errorMessage, errCode);
-		}
-
-		// Should not happen!
-		fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
-		return PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> No error set from query call");
+		HandleError(self, "query");
 	}
 
 	PRINTMARK();
@@ -1160,6 +1173,8 @@ static PyMethodDef Connection_methods[] = {
 };
 static PyMemberDef Connection_members[] = {
 
+	{"Error", T_OBJECT, offsetof(Connection, Error), READONLY},
+	{"SQLError", T_OBJECT, offsetof(Connection, SQLError), READONLY},
 	{"txBufferSize", T_INT, offsetof(Connection, txBufferSize), READONLY, "Size of tx buffer in bytes"},
 	{"rxBufferSize", T_INT, offsetof(Connection, rxBufferSize), READONLY, "Size of rx buffer in bytes"},
 	{NULL}
@@ -1323,10 +1338,26 @@ static PyMethodDef methods[] = {
 };
 
 
+
+/*
+        StandardError
+        |__Warning
+        |__Error
+           |__InterfaceError
+           |__DatabaseError
+              |__DataError
+              |__OperationalError
+              |__IntegrityError
+              |__InternalError
+              |__ProgrammingError
+              |__NotSupportedError
+*/
+
 PyMODINIT_FUNC
 initamysql(void) 
 {
 	PyObject* m;
+	PyObject *dict;
 	PyDateTime_IMPORT;
 
 	m = Py_InitModule3("amysql", methods,
@@ -1334,6 +1365,8 @@ initamysql(void)
 	if (m == NULL)
 		return;
 
+  dict = PyModule_GetDict(m);
+	
 	ConnectionType.tp_new = PyType_GenericNew;
 	if (PyType_Ready(&ConnectionType) < 0)
 		return;
@@ -1346,5 +1379,9 @@ initamysql(void)
 	Py_INCREF(&ResultSetType);
 	PyModule_AddObject(m, "ResultSet", (PyObject *)&ResultSetType);
 
+	amysql_Error = PyErr_NewException("amysql.Error", PyExc_StandardError, NULL);
+	amysql_SQLError = PyErr_NewException("amysql.SQLError", amysql_Error, NULL);
 
+	PyDict_SetItemString(dict, "Error", amysql_Error);
+	PyDict_SetItemString(dict, "SQLError", amysql_SQLError);
 }

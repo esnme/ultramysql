@@ -70,6 +70,12 @@ enum AMConnection_Ops
 	AMC_WRITE,
 };
 
+enum AMErrorType
+{
+	AME_OTHER,
+	AME_MYSQL,
+};
+
 typedef struct 
 {
 	UINT8 type;
@@ -113,7 +119,7 @@ AMConnection AMConnection_Create(AMConnectionCAPI *_capi);
 void AMConnection_Destroy(AMConnection _conn);
 void *AMConnection_Query(AMConnection conn, const char *_query, size_t _cbQuery);
 int  AMConnection_Connect (AMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, int _charset);
-int AMConnection_GetLastError (AMConnection conn, const char **_ppOutMessage, int *_outErrno);
+int AMConnection_GetLastError (AMConnection conn, const char **_ppOutMessage, int *_outErrno, int *_type);
 int AMConnection_GetTxBufferSize (AMConnection conn);
 int AMConnection_GetRxBufferSize (AMConnection conn);
 int AMConnection_IsConnected (AMConnection conn);

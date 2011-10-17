@@ -84,8 +84,6 @@ class Connection
 		FAILED,
 	};
 
-
-
 private:
 	State m_state;
 
@@ -106,6 +104,7 @@ private:
 	std::string m_errorMessage;
 	int m_errno;
 	int m_timeout;
+	AMErrorType m_errorType;
 
 	AMConnectionCAPI m_capi;
 
@@ -120,7 +119,7 @@ public:
 	bool connect(const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, MYSQL_CHARSETS _charset);
 	//void handleSocketEvent (SocketEvents _evt);
 	void *query(const char *_query, size_t _cbQuery);
-	bool getLastError (const char **_ppOutMessage, int *_outErrno);
+	bool getLastError (const char **_ppOutMessage, int *_outErrno, int *_outErrorType);
 
 	int getRxBufferSize();
 	int getTxBufferSize();
@@ -142,7 +141,7 @@ protected:
 	void handleEOFPacket();
 	void *handleResultPacket(int fieldCount);
 	void *handleOKPacket();
-	void setError (const char *_message, int _errno);
+	void setError (const char *_message, int _errno, AMErrorType _type);
 
 protected:
 };

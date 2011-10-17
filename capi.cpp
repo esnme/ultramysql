@@ -89,9 +89,9 @@ EXPORT_ATTR int AMConnection_SetTimeout(AMConnection conn, int timeout)
 	return ((Connection *)conn)->setTimeout(timeout) ? 1 : 0;
 }
 
-EXPORT_ATTR int AMConnection_GetLastError (AMConnection conn, const char **_ppOutMessage, int *_outErrno)
+EXPORT_ATTR int AMConnection_GetLastError (AMConnection conn, const char **_ppOutMessage, int *_outErrno, int *_type)
 {
-	return ((Connection *)conn)->getLastError(_ppOutMessage, _outErrno) ? 1 : 0;
+	return ((Connection *)conn)->getLastError(_ppOutMessage, _outErrno, _type) ? 1 : 0;
 }
 
 EXPORT_ATTR int AMConnection_GetTxBufferSize (AMConnection conn)

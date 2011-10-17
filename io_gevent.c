@@ -101,27 +101,23 @@ void *API_createSocket(int family, int type, int proto)
 
 		if (sockmodule == NULL)
 		{
-			PRINTMARK();
 			return NULL;
 		}
 		sockclass = PyObject_GetAttrString(sockmodule, "socket");
 
 		if (sockclass == NULL)
 		{
-			PRINTMARK();
 			return NULL;
 		}
 
 		//FIXME: PyType will leak
 		if (!PyType_Check(sockclass))
 		{
-			PRINTMARK();
 			return NULL;
 		}
 
 		if (!PyCallable_Check(sockclass))
 		{
-			PRINTMARK();
 			return NULL;
 		}
 		
@@ -134,11 +130,9 @@ void *API_createSocket(int family, int type, int proto)
 
 	if (sockobj == NULL)
 	{
-		PRINTMARK();
 		return NULL;
 	}
 
-	PRINTMARK();
 	return sockobj;
 }
 
@@ -160,7 +154,6 @@ int API_setTimeout(void *sock, int timeoutSec)
 
 	if (retobj == NULL)
 	{
-		PyErr_Clear();
 		return 0;
 	}
 
@@ -180,12 +173,14 @@ int API_getSocketFD(void *sock)
 
 	if (fdobj == NULL)
 	{
+		PyErr_Clear();
 		PRINTMARK();
 		return -1;
 	}
 
 	if (!PyInt_Check(fdobj))
 	{
+		PyErr_Clear();
 		Py_XDECREF(fdobj);
 		PRINTMARK();
 		return -1;
@@ -268,8 +263,6 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 
 		if (sockmodule == NULL)
 		{
-			fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
-
 			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> Could not import gevent.socket");
 			return -1;
 		}
@@ -279,16 +272,12 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 
 		if (waitread == NULL || waitwrite == NULL)
 		{
-			fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
-
 			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> Could not import wait_read or wait_write");
 			return -1;
 		}
 
 		if (!PyFunction_Check(waitread) || !PyFunction_Check(waitwrite))
 		{
-			fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
-
 			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> wait_read or wait_write are not callable");
 			return -1;
 		}
@@ -303,8 +292,6 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 	argList = PyTuple_New(1);
 	PyTuple_SET_ITEM(argList, 0, PyInt_FromLong(fd));
 	kwargList = PyDict_New();
-
-	//fprintf (stderr, "%s: Waiting for %d on %d %p with timeout %d\n", __FUNCTION__, (int) ops, fd, sock, timeout);
 
 	PyDict_SetItemString(kwargList, "timeout", PyInt_FromLong(timeout));
 
@@ -330,14 +317,6 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 
 	if (evtObject == NULL)
 	{
-		if (!PyErr_Occurred())
-		{
-			fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
-
-			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Exception is not set with wait operation %d", (int) ops);
-			return 0;
-		}
-
 		PRINTMARK();
 		return 0;
 	}
@@ -348,8 +327,6 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 
 	if (PyErr_Occurred())
 	{
-		fprintf (stderr, "%s:%d: UNEXPECTED:>\n", __FUNCTION__, __LINE__);
-
 		PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Exception is set without error happening");
 		return 0;
 	}
