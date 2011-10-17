@@ -133,15 +133,22 @@ class TestMySQL(unittest.TestCase):
         start = time.clock()
         try:
             cnn.connect (DB_HOST, 31481, DB_USER, DB_PASSWD, DB_DB)
-
+            assert False, "Expected exception"
         except(gevent.socket.error):
             elapsed = time.clock() - start
 
             if (elapsed > 2):
                 assert False, "Timeout isn't working"
-            return
+                
         
-        assert False, "Expected expection"
+        
+        try:
+            res = cnn.query("select * from kaka");
+            assert False, "Expected exception"
+        except(amysql.Error):    
+            pass
+        
+        
         
     
     

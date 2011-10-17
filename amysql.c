@@ -141,11 +141,8 @@ void *API_createResult(int columns)
 void API_resultSetField(void *result, int column, AMTypeInfo *ti, void *_name, size_t _cbName)
 {
 	PyObject *field = PyTuple_New(2);
-	PRINTMARK();
 	PyTuple_SET_ITEM(field, 0, PyString_FromStringAndSize((const char *)_name, _cbName));
-	PRINTMARK();
 	PyTuple_SET_ITEM(field, 1, PyInt_FromLong(ti->type));
-	PRINTMARK();
 	PyTuple_SET_ITEM(((ResultSet *) result)->fields, column, field);
 	PRINTMARK();
 	return;
@@ -764,7 +761,7 @@ PyObject *HandleError(Connection *self, const char *funcName)
 				return PyErr_Format(PyExc_RuntimeError, "Unexpected error type (%d) in function %s\n", (int) errType, funcName);
 		}
 
-		value = Py_BuildValue("(s, s)", funcName, "Should not happen");
+		value = Py_BuildValue("(s,s)", funcName, "Should not happen");
 		PyErr_SetObject(PyExc_RuntimeError, value);
 		Py_DECREF(value);
 		return NULL;
@@ -1121,6 +1118,8 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 	return retobj;
 }
 
+
+
 PyObject *Connection_query(Connection *self, PyObject *args)
 {
 	void *ret;
@@ -1215,6 +1214,9 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 	return (PyObject *) ret;
 }
 
+
+
+
 PyObject *Connection_close(Connection *self, PyObject *notused)
 {
 	AMConnection_Close(self->conn);
@@ -1228,12 +1230,64 @@ static void Connection_Destructor(Connection *self)
   PyObject_Del(self);
 }
 
+PyObject *_Connection_connect(Connection *self, PyObject *args)
+{
+	PyObject *result = Connection_connect(self, args);
+	if (result == NULL)
+	{
+		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+	}
+	return result;
+}
+
+
+PyObject *_Connection_query(Connection *self, PyObject *args)
+{
+	PyObject *result = Connection_query(self, args);
+	if (result == NULL)
+	{
+		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+	}
+	return result;
+}
+
+PyObject *_Connection_close(Connection *self, PyObject *args)
+{
+	PyObject *result = Connection_close(self, args);
+	if (result == NULL)
+	{
+		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+	}
+	return result;
+}
+
+PyObject *_Connection_isConnected(Connection *self, PyObject *args)
+{
+	PyObject *result = Connection_isConnected(self, args);
+	if (result == NULL)
+	{
+		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+	}
+	return result;
+}
+
+PyObject *_Connection_setTimeout(Connection *self, PyObject *args)
+{
+	PyObject *result = Connection_setTimeout(self, args);
+	if (result == NULL)
+	{
+		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+	}
+	return result;
+}
+
+
 static PyMethodDef Connection_methods[] = {
-	{"connect", (PyCFunction)			Connection_connect,			METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
-	{"query", (PyCFunction)				Connection_query,				METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
-	{"close", (PyCFunction)	Connection_close,	METH_NOARGS, "Closes connection"},
-	{"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, "Check connection status"},
-	{"settimeout", (PyCFunction) Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},
+	{"connect", (PyCFunction)			_Connection_connect,			METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
+	{"query", (PyCFunction)				_Connection_query,				METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
+	{"close", (PyCFunction)	_Connection_close,	METH_NOARGS, "Closes connection"},
+	{"is_connected", (PyCFunction) _Connection_isConnected, METH_NOARGS, "Check connection status"},
+	{"settimeout", (PyCFunction) _Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},
 	{NULL}
 };
 static PyMemberDef Connection_members[] = {
