@@ -618,6 +618,12 @@ int API_resultRowValue(void *result, int column, AMTypeInfo *ti, char *value, si
 
 	if (valobj == NULL)
 	{
+		if (PyErr_Occurred())
+		{
+			return FALSE;
+		}
+
+		PyErr_Format (amysql_Error, "Unable to convert field of type %d", ti->type);
 		return FALSE;
 	}
 
@@ -826,8 +832,6 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 		self->PFN_PyUnicode_Encode = PyUnicode_EncodeUTF8;
 	}
 
-
-
 	if (!AMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, charset))
 	{
 		return HandleError(self, "connect");
@@ -922,6 +926,19 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
 	{
 		PRINTMARK();
 		strobj = self->PFN_PyUnicode_Encode(PyUnicode_AS_UNICODE(obj), PyUnicode_GET_SIZE(obj), NULL);
+
+		if (strobj == NULL)
+		{
+			if (PyErr_Occurred())
+			{
+				return -1;
+			}
+
+			PyErr_SetObject (PyExc_ValueError, obj);
+			return -1;
+		}
+
+
 		ret = AppendAndEscapeString(start, end, PyString_AS_STRING(strobj), PyString_AS_STRING(strobj) + PyString_GET_SIZE(strobj), TRUE);
 		Py_DECREF(strobj);
 
@@ -1040,8 +1057,9 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
 			if (*iptr != 's')
 			{
-				//FIXME: This is an error really
-				goto END_PARSE;
+				Py_DECREF(iterator);
+				if (heap) PyObject_Free(obuffer);
+				return PyErr_Format (PyExc_ValueError, "Found character %c expected %%", *iptr);
 			}
 
 			iptr ++;
@@ -1050,8 +1068,9 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
 			if (arg == NULL)
 			{
-				//FIXME: This is an error really
-				goto END_PARSE;
+				Py_DECREF(iterator);
+				if (heap) PyObject_Free(obuffer);
+				return PyErr_Format (PyExc_ValueError, "Unexpected end of iterator found");
 			}
 
 			appendLen = AppendEscapedArg(self, optr, obuffer + cbOutQuery, arg);
@@ -1059,8 +1078,9 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
 			if (appendLen == -1)
 			{
-				//FIXME: This is an error really
-				goto END_PARSE;
+				Py_DECREF(iterator);
+				if (heap) PyObject_Free(obuffer);
+				return NULL;
 			}
 
 			optr += appendLen;
@@ -1076,7 +1096,6 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
 	END_PARSE:
 	Py_DECREF(iterator);
-
 
 	retobj = PyString_FromStringAndSize (obuffer, (optr - obuffer));
 
@@ -1140,6 +1159,12 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 		PRINTMARK();
 		escapedQuery = EscapeQueryArguments(self, query, iterable);
 		Py_DECREF(query);
+
+		if (escapedQuery == NULL)
+		{
+			return NULL;
+		}
+
 	}
 	else
 	{
@@ -1153,7 +1178,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 	PRINTMARK();
 	if (ret == NULL)
 	{
-		HandleError(self, "query");
+		return HandleError(self, "query");
 	}
 
 	PRINTMARK();

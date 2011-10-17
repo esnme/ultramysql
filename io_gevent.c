@@ -130,6 +130,7 @@ void *API_createSocket(int family, int type, int proto)
 
 	if (sockobj == NULL)
 	{
+		PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception when creating socket");
 		return NULL;
 	}
 
@@ -154,6 +155,12 @@ int API_setTimeout(void *sock, int timeoutSec)
 
 	if (retobj == NULL)
 	{
+		if (!PyErr_Occurred())
+		{
+			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception when setting timeout");
+			return 0;
+		}
+
 		return 0;
 	}
 
@@ -233,7 +240,12 @@ int API_connectSocket(void *sock, const char *host, int port)
 
 	if (res == NULL)
 	{
-		PRINTMARK();
+		if (!PyErr_Occurred())
+		{
+			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception when connecting");
+			return 0;
+		}
+
 		return 0;
 	}
 
@@ -317,6 +329,13 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 
 	if (evtObject == NULL)
 	{
+		if (!PyErr_Occurred())
+		{
+			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception from gevent operation %d", ops);
+			return 0;
+		}
+
+
 		PRINTMARK();
 		return 0;
 	}
