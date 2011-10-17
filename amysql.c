@@ -160,6 +160,33 @@ void API_resultRowBegin(void *result)
 
 PyObject *HandleError(Connection *self, const char *funcName);
 
+void API_resultRowEnd(void *result)
+{
+	PyList_Append(((ResultSet *)result)->rows, ((ResultSet *)result)->currRow);
+	Py_DECREF((PyObject *)((ResultSet *)result)->currRow);
+	((ResultSet *)result)->currRow = NULL;
+	return;
+}
+
+void API_destroyResult(void *result)
+{
+	PRINTMARK();
+	Py_DECREF( (PyObject *) result);
+	PRINTMARK();
+
+	return;
+}
+
+void *API_resultOK(UINT64 affected, UINT64 insertId, int serverStatus, const char *_message, size_t len)
+{
+	PyObject *tuple = PyTuple_New(2);
+
+	PyTuple_SET_ITEM(tuple, 0, PyLong_FromUnsignedLongLong(affected));
+	PyTuple_SET_ITEM(tuple, 1, PyLong_FromUnsignedLongLong(insertId));
+
+	return (void *) tuple;
+}
+
 
 INT32 parseINT32(char *start, char *end)
 {
@@ -633,32 +660,7 @@ int API_resultRowValue(void *result, int column, AMTypeInfo *ti, char *value, si
 	return TRUE;
 }
 
-void API_resultRowEnd(void *result)
-{
-	PyList_Append(((ResultSet *)result)->rows, ((ResultSet *)result)->currRow);
-	Py_DECREF((PyObject *)((ResultSet *)result)->currRow);
-	((ResultSet *)result)->currRow = NULL;
-	return;
-}
 
-void API_destroyResult(void *result)
-{
-	PRINTMARK();
-	Py_DECREF( (PyObject *) result);
-	PRINTMARK();
-
-	return;
-}
-
-void *API_resultOK(UINT64 affected, UINT64 insertId, int serverStatus, const char *_message, size_t len)
-{
-	PyObject *tuple = PyTuple_New(2);
-
-	PyTuple_SET_ITEM(tuple, 0, PyLong_FromUnsignedLongLong(affected));
-	PyTuple_SET_ITEM(tuple, 1, PyLong_FromUnsignedLongLong(insertId));
-
-	return (void *) tuple;
-}
 
 AMConnectionCAPI capi = {
 	API_createSocket,
@@ -735,6 +737,15 @@ PyObject *HandleError(Connection *self, const char *funcName)
 
 	if (AMConnection_GetLastError (self->conn, &errorMessage, &errCode, &errType))
 	{
+		if (PyErr_Occurred())
+		{
+			value = Py_BuildValue("(s,o,i,i,s)", "Python exception when local error is set", PyErr_Occurred(), errCode, errType, errorMessage);
+			PyErr_Clear();
+			PyErr_SetObject(amysql_Error, value);
+			Py_DECREF(value);
+			return NULL;
+		}
+
 		switch (errType)
 		{
 			case AME_OTHER:
@@ -748,6 +759,9 @@ PyObject *HandleError(Connection *self, const char *funcName)
 				PyErr_SetObject(amysql_SQLError, value);
 				Py_DECREF(value);
 				return NULL;
+
+			default:
+				return PyErr_Format(PyExc_RuntimeError, "Unexpected error type (%d) in function %s\n", (int) errType, funcName);
 		}
 
 		value = Py_BuildValue("(s, s)", funcName, "Should not happen");
@@ -1147,6 +1161,17 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 		}
 
 		query = self->PFN_PyUnicode_Encode(PyUnicode_AS_UNICODE(inQuery), PyUnicode_GET_SIZE(inQuery), NULL);
+
+		if (query == NULL)
+		{
+			if (!PyErr_Occurred())
+			{
+				PyErr_SetObject(PyExc_ValueError, query);
+				return NULL;
+			}
+
+			return NULL;
+		}
 	}
 	else
 	{
@@ -1162,6 +1187,11 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 
 		if (escapedQuery == NULL)
 		{
+			if (!PyErr_Occurred())
+			{
+				return PyErr_Format(PyExc_RuntimeError, "Exception not set in EscapeQueryArguments chain");
+			}
+
 			return NULL;
 		}
 
