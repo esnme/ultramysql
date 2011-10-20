@@ -92,6 +92,7 @@ typedef struct __AMConnectionCAPI
 	int (*wouldBlock)(void *instance, int fd, int ops, int timeout);
 	int (*connectSocket)(void *sock, const char *host, int port);
 	int (*setTimeout)(void *sock, int timeout);
+	void (*clearException)(void);
 
 	void *(*createResult)(int columns);
 	void (*resultSetField)(void *result, int ifield, AMTypeInfo *ti, void *name, size_t cbName);

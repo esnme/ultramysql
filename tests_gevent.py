@@ -76,7 +76,7 @@ DB_DB = 'gevent_test'
 
 class TestMySQL(unittest.TestCase):
     log = logging.getLogger('TestMySQL')
-    
+
     def testUnique(self):
         cnn = amysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -95,6 +95,7 @@ class TestMySQL(unittest.TestCase):
         except amysql.SQLError, e:
             pass
         cnn.query("select * from tblunique")
+        cnn.close()
 
     def testMySQLTimeout(self):
         cnn = amysql.Connection()
@@ -147,10 +148,7 @@ class TestMySQL(unittest.TestCase):
             assert False, "Expected exception"
         except(amysql.Error):    
             pass
-        
-        
-        
-    
+        cnn.close()
     
     def testConnectFails(self):
         cnn = amysql.Connection()
@@ -160,7 +158,7 @@ class TestMySQL(unittest.TestCase):
             assert False, "Expected exception"
         except(gevent.socket.error):
             pass
-        pass
+        cnn.close()
 
     def testConnectDNSFails(self):
         cnn = amysql.Connection()
@@ -170,9 +168,7 @@ class TestMySQL(unittest.TestCase):
             assert False, "Expected exception"
         except(gevent.socket.error):
             pass
-        pass
-        
-
+        cnn.close()
         
     def testConcurrentQueryError(self):
         connection = amysql.Connection()
@@ -192,6 +188,7 @@ class TestMySQL(unittest.TestCase):
         gevent.joinall([ch1, ch2, ch3])
         
         self.assertTrue(errorCount[0] > 0)
+        connection.close()
 
     def testConcurrentConnectError(self):
         connection = amysql.Connection()
@@ -210,6 +207,7 @@ class TestMySQL(unittest.TestCase):
         gevent.joinall([ch1, ch2, ch3])
         
         self.assertTrue(errorCount[0] > 0)
+        connection.close()
 
         
     def testParallelQuery(self):
@@ -228,8 +226,6 @@ class TestMySQL(unittest.TestCase):
 
         end = time.time()
         self.assertAlmostEqual(3.0, end - start, places = 0)
-
-
  
         
     def testConnectTwice(self):
@@ -241,9 +237,8 @@ class TestMySQL(unittest.TestCase):
         except(amysql.Error):
             pass
         pass
-
-
-        
+        cnn.close()
+            
     def testConnectClosed(self):
         cnn = amysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -263,6 +258,8 @@ class TestMySQL(unittest.TestCase):
             assert False, "Expected exception"
         except(RuntimeError):
             pass
+        cnn.close()
+        
         
     def testMySQLClient(self):
         cnn = amysql.Connection()
@@ -335,6 +332,7 @@ class TestMySQL(unittest.TestCase):
         self.assertEquals((2, 'test2'), rs.rows[2])
 
         #this should not work, cursor was closed
+        cnn.close()
 
     def testLargePackets(self):
         cnn = amysql.Connection()
@@ -429,7 +427,8 @@ class TestMySQL(unittest.TestCase):
         self.assertEquals(str, type(b2))
         self.assertEquals(256, len(b2))
         self.assertEquals(blob, b2)
-    
+        cnn.close()
+
     def testAutoInc(self):
 
         cnn = amysql.Connection()
@@ -496,6 +495,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_id, test_bigint, test_bigint2 from tblbigint where test_bigint = test_bigint2")
         result = rs.rows
         self.assertEquals([(1, BIGNUM, BIGNUM), (2, BIGNUM, BIGNUM)], result)
+        cnn.close()
 
     def testDate(self):
         # Tests the behaviour of insert/select with mysql/DATE <-> python/datetime.date
@@ -520,6 +520,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_id, test_date, test_date2 from tbldate where test_date = test_date2")
         result = rs.rows
         self.assertEquals([(1, d_date, d_date)], result)
+        cnn.close()
 
     def testDateTime(self):
         # Tests the behaviour of insert/select with mysql/DATETIME <-> python/datetime.datetime
@@ -545,6 +546,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_id, test_date, test_date2 from tbldate where test_date = test_date2")
         result = rs.rows
         self.assertEquals([(1, d_date, d_date)], result)
+        cnn.close()
 
     def testZeroDates(self):
         # Tests the behaviour of zero dates
@@ -563,6 +565,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_id, test_date, test_datetime from tbldate where test_id = 1")
         result = rs.rows
         self.assertEquals([(1, None, None)], result)
+        cnn.close()
 
     def testUnicodeUTF8(self):
         peacesign_unicode = u"\u262e"
@@ -582,7 +585,8 @@ class TestMySQL(unittest.TestCase):
 
         # We expect unicode strings back
         self.assertEquals([(1, peacesign_unicode), (2, peacesign_unicode)], result)
-  
+        cnn.close()
+
     def testBinary(self):
         peacesign_binary = "\xe2\x98\xae"
         peacesign_binary2 = "\xe2\x98\xae" * 10
@@ -601,6 +605,7 @@ class TestMySQL(unittest.TestCase):
 
         # We expect binary strings back
         self.assertEquals([(1, peacesign_binary),(2, peacesign_binary2)], result)
+        cnn.close()
 
     
     def testBlob(self):
@@ -621,6 +626,7 @@ class TestMySQL(unittest.TestCase):
 
         # We expect binary strings back
         self.assertEquals([(1, peacesign_binary),(2, peacesign_binary2)], result)    
+        cnn.close()
 
     def testCharsets(self):
         aumlaut_unicode = u"\u00e4"
@@ -650,9 +656,12 @@ class TestMySQL(unittest.TestCase):
             result = rs.rows
             self.assertEquals(result, expected)
 
-
+        cnn.close()
+         
+       
 if __name__ == '__main__':
     unittest.main()
+
 """
 if __name__ == '__main__':
     from guppy import hpy

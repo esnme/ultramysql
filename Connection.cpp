@@ -187,6 +187,7 @@ bool Connection::writeSocket()
 			return true;
 		}
 
+		PRINTMARK();
 		setError("Socket send failed", SocketGetLastError(), AME_OTHER);
 		return false;
 	}
@@ -208,16 +209,25 @@ bool Connection::close(void)
 			m_writer.reset();
 			m_writer.writeByte(MC_QUIT);
 			m_writer.finalize(0);
-			sendPacket();
+			
+			if (!sendPacket())
+			{	
+                m_capi.clearException();
+			}
 		}
 
-		m_capi.closeSocket(m_sockInst);
-		m_capi.deleteSocket(m_sockInst);
-		m_sockInst = NULL;
-		return true;
+		if (m_sockInst)
+		{
+			m_capi.closeSocket(m_sockInst);
+            m_capi.clearException();
+			m_capi.deleteSocket(m_sockInst);
+            m_capi.clearException();
+			m_sockInst = NULL;
+			return true;
+		}
 	}
 
-	return false;
+	return true;
 }
 
 bool Connection::connectSocket()
@@ -403,7 +413,6 @@ void Connection::setError (const char *_message, int _errno, AMErrorType _type)
 	m_errorType = _type;
 
 	PRINTMARK();
-
 
 	if (_type != AME_MYSQL)
 	{

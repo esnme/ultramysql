@@ -216,7 +216,9 @@ void API_closeSocket(void *sock)
 
 void API_deleteSocket(void *sock)
 {
+	PRINTMARK();
 	Py_DECREF( (PyObject *) sock);
+	PRINTMARK();
 }
 
 int API_connectSocket(void *sock, const char *host, int port)

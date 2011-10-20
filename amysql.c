@@ -129,6 +129,11 @@ int API_wouldBlock(void *sock, int fd, int ops, int timeout);
 int API_connectSocket(void *sock, const char *host, int port);
 int API_setTimeout(void *sock, int timeoutSec);
 
+void API_clearException(void)
+{
+    PyErr_Clear();
+}
+
 void *API_createResult(int columns)
 {
 	ResultSet *ret;
@@ -667,6 +672,7 @@ AMConnectionCAPI capi = {
 	API_wouldBlock,
 	API_connectSocket,
 	API_setTimeout,
+    API_clearException,
 	API_createResult,
 	API_resultSetField,
 	API_resultRowBegin,
@@ -687,6 +693,12 @@ int Connection_init(Connection *self, PyObject *arg)
 	self->SQLError = amysql_SQLError;
 
 	self->PFN_PyUnicode_Encode = NULL;
+
+	if (PyErr_Occurred())
+	{
+		PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
+		return -1;
+	}
 
 	return 0;
 }
@@ -1219,15 +1231,23 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 
 PyObject *Connection_close(Connection *self, PyObject *notused)
 {
-	AMConnection_Close(self->conn);
+	if (!AMConnection_Close(self->conn))
+	{
+		return HandleError(self, "close");
+	}
 	Py_RETURN_NONE;
 }
 
 
 static void Connection_Destructor(Connection *self)
 {
+	PRINTMARK();
 	AMConnection_Destroy(self->conn);
+	PRINTMARK();
   PyObject_Del(self);
+	PRINTMARK();
+	if (PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
+	PRINTMARK();
 }
 
 PyObject *_Connection_connect(Connection *self, PyObject *args)
@@ -1236,7 +1256,11 @@ PyObject *_Connection_connect(Connection *self, PyObject *args)
 	if (result == NULL)
 	{
 		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+		return NULL;
 	}
+
+	if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
+
 	return result;
 }
 
@@ -1247,7 +1271,11 @@ PyObject *_Connection_query(Connection *self, PyObject *args)
 	if (result == NULL)
 	{
 		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+		return NULL;
 	}
+
+	if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
+
 	return result;
 }
 
@@ -1257,7 +1285,11 @@ PyObject *_Connection_close(Connection *self, PyObject *args)
 	if (result == NULL)
 	{
 		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+		return NULL;
 	}
+
+	if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
+
 	return result;
 }
 
@@ -1267,7 +1299,11 @@ PyObject *_Connection_isConnected(Connection *self, PyObject *args)
 	if (result == NULL)
 	{
 		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+		return NULL;
 	}
+
+	if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
+
 	return result;
 }
 
@@ -1277,7 +1313,11 @@ PyObject *_Connection_setTimeout(Connection *self, PyObject *args)
 	if (result == NULL)
 	{
 		if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
+		return NULL;
 	}
+
+	if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
+
 	return result;
 }
 
