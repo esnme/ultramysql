@@ -1437,13 +1437,6 @@ static PyMemberDef ResultSet_members[] = {
   {NULL}
 };
 
-
-
-
-
-
-
-
 static PyTypeObject ResultSetType = { 
   PyObject_HEAD_INIT(NULL)
   0,				/* ob_size        */
