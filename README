@@ -1,12 +1,10 @@
 :: Description ::
-A fast MySQL driver written in pure C/C++ for gevent or normal Python I/O
+A fast MySQL driver written in pure C/C++ for Python. 
+Compatible with gevent through monkey patching
 
 :: Requirements ::
-Requires Python (http://www.python.org) and optionally gevent (http://www.gevent.org).
+Requires Python (http://www.python.org) 
 
 :: Installation ::
-For "normal" Python with blocking and without gevent:
-python setup_cpython.py install
+python setup.py build install
 
-For Python with gevent:
-python setup_gevent.py install
