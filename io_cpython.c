@@ -85,7 +85,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)		
 #define PRINTMARK() 		
 
-void *API_createSocket(int family, int type, int proto)
+void *API_getSocket()
 {
 	/* Create a normal socket */
 	PyObject *sockobj;
@@ -169,35 +169,6 @@ int API_setTimeout(void *sock, int timeoutSec)
 
 }   
 
-
-int API_getSocketFD(void *sock)
-{
-	int ret;
-	PyObject *fdobj;
-	PRINTMARK();
-	
-	fdobj = PyObject_CallMethod ((PyObject *) sock, "fileno", NULL);
-	PRINTMARK();
-
-	if (fdobj == NULL)
-	{
-		PRINTMARK();
-		return -1;
-	}
-
-	if (!PyInt_Check(fdobj))
-	{
-		Py_XDECREF(fdobj);
-		PRINTMARK();
-		return -1;
-	}
-
-	ret = PyInt_AS_LONG(fdobj);
-	
-	Py_DECREF(fdobj);
-	return ret;
-}
-
 void API_closeSocket(void *sock)
 {
 	PyObject *res = PyObject_CallMethod( (PyObject *) sock, "close", NULL);
@@ -220,7 +191,6 @@ int API_connectSocket(void *sock, const char *host, int port)
 {
 	PyObject *res;
 	PyObject *addrTuple;
-	PyObject *argList;
 	PyObject *connectStr;
 
 	PRINTMARK();
@@ -247,37 +217,50 @@ int API_connectSocket(void *sock, const char *host, int port)
 	return 1;
 }
 
-int API_wouldBlock(void *sock, int fd, int ops, int timeout)
+int API_recvSocket(void *sock, char *buffer, int cbBuffer)
 {
-	struct timeval tv;
-	int result;
-	fd_set readSet;
-	fd_set writeSet;
+	PyObject *res;
+	PyObject *bufSize;
+  PyObject *funcStr;
+  int ret;
 
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
+	funcStr = PyString_FromString("recv");
+  bufSize = PyInt_FromLong(cbBuffer);
+	res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, bufSize, NULL);
+	Py_DECREF(funcStr);
+  Py_DECREF(bufSize);
 
-	FD_ZERO(&writeSet);
-	FD_ZERO(&readSet);
-
-	switch (ops)
+	if (res == NULL)
 	{
-		case AMC_READ:
-			FD_SET (fd, &readSet);
-			break;
-
-		case AMC_WRITE:
-			FD_SET (fd, &writeSet);
-			break;
-	}
-	Py_BEGIN_ALLOW_THREADS
-	result = select (fd + 1, &readSet, &writeSet, NULL, &tv);
-	Py_END_ALLOW_THREADS    
-
-	if (result < 1)
-	{
-		return 0;
+		return -1;
 	}
 
-	return 1;
+  ret = (int) PyString_GET_SIZE(res);
+  memcpy (buffer, PyString_AS_STRING(res), ret);
+	Py_DECREF(res);
+	return ret;
 }
+
+int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
+{
+	PyObject *res;
+	PyObject *pybuffer;
+  PyObject *funcStr;
+  int ret;
+
+	funcStr = PyString_FromString("send");
+  pybuffer = PyString_FromStringAndSize(buffer, cbBuffer);
+	res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, pybuffer, NULL);
+	Py_DECREF(funcStr);
+  Py_DECREF(pybuffer);
+
+	if (res == NULL)
+	{
+		return -1;
+	}
+
+  ret = (int) PyInt_AsLong(res);
+	Py_DECREF(res);
+	return ret;
+}
+

@@ -79,7 +79,6 @@ Connection::Connection (UMConnectionCAPI *_capi)
 
 	m_timeout = -1;
 	m_state = NONE;
-	m_sockfd = -1;
 	m_sockInst = NULL;
 	m_errno = -1;
 	memcpy (&m_capi, _capi, sizeof (UMConnectionCAPI));
@@ -141,22 +140,20 @@ bool Connection::readSocket()
 	if (bytesToRecv == 0)
 	{
 		// Socket buffer got full!
-
 		setError("Socket receive buffer full", 0, UME_OTHER);
 		return false;
 	}
+  else
+  if (bytesToRecv > 65536)
+  {
+    bytesToRecv = 65536;
+  }
+  
 
-	int recvResult = recv (m_sockfd, m_reader.getWritePtr(), bytesToRecv, MSG_NOSIGNAL);
+	int recvResult = m_capi.recvSocket(m_sockInst, m_reader.getWritePtr(), bytesToRecv);
 
 	if (recvResult == -1)
 	{
-		if (SocketWouldBlock(m_sockfd))
-		{
-			return true;
-		}
-
-		int sockError = SocketGetLastError();
-		setError("Socket receive failed",  sockError, UME_OTHER);
 		return false;
 	}
 	else
@@ -178,17 +175,16 @@ bool Connection::writeSocket()
 	assert (bytesToSend > 0);
 	assert (bytesToSend < m_writer.getEnd() - m_writer.getStart());
 
-	int sendResult = send (m_sockfd, m_writer.getReadCursor(), bytesToSend, MSG_NOSIGNAL);
+	int sendResult = m_capi.sendSocket(m_sockInst, m_writer.getReadCursor(), bytesToSend);
 
 	if (sendResult == -1)
 	{
-		if (SocketWouldBlock(m_sockfd))
-		{
-			return true;
-		}
-
-		PRINTMARK();
-		setError("Socket send failed", SocketGetLastError(), UME_OTHER);
+		return false;
+	}
+	else
+	if (sendResult == 0)
+	{
+		setError("Connection reset by peer when receiving", 0, UME_OTHER);
 		return false;
 	}
 
@@ -212,17 +208,16 @@ bool Connection::close(void)
 			
 			if (!sendPacket())
 			{	
-                m_capi.clearException();
+        m_capi.clearException();
 			}
 		}
 
 		if (m_sockInst)
 		{
-			m_capi.closeSocket(m_sockInst);
-            m_capi.clearException();
-			m_capi.deleteSocket(m_sockInst);
-            m_capi.clearException();
-			m_sockInst = NULL;
+      m_capi.closeSocket(m_sockInst);
+      m_capi.clearException();
+      m_capi.deleteSocket(m_sockInst);
+      m_sockInst = NULL;
 			return true;
 		}
 	}
@@ -232,7 +227,6 @@ bool Connection::close(void)
 
 bool Connection::connectSocket()
 {
-	PRINTMARK();
 	if (!m_capi.connectSocket(m_sockInst, m_host.c_str(), m_port))
 	{
 		return false;
@@ -365,13 +359,6 @@ bool Connection::recvPacket()
 		{
 			break;
 		}
-
-		time_t tsStart = time (0);
-
-		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, UMC_READ, m_timeout == -1 ? 10 : m_timeout))
-		{
-			return false;
-		}
 	}
 
 	return true;
@@ -396,12 +383,7 @@ bool Connection::sendPacket()
 		{
 			break;
 		}
-
-		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, UMC_WRITE, m_timeout == -1 ? 10 : m_timeout))
-		{
-			return false;
-		}
-	}
+  }
 
 	return true;
 }
@@ -477,8 +459,8 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 	m_charset = _charset;
 
 	PRINTMARK();
-	m_sockInst = m_capi.createSocket(AF_INET, SOCK_STREAM, 0);
-	
+	m_sockInst = m_capi.getSocket();
+  
 	if (m_sockInst == NULL)
 	{
 		m_dbgMethodProgress --;
@@ -493,10 +475,6 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 			return false;
 		}
 	}
-
-	PRINTMARK();
-	m_sockfd = m_capi.getSocketFD(m_sockInst);
-
 
 	if (!connectSocket())
 	{

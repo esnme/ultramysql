@@ -64,10 +64,12 @@ import time
 import datetime
 import logging
 import unittest
+import gevent
+from gevent import monkey
+monkey.patch_socket()
 import socket
-import amysql
 
-import threading
+import umysql
 
 DB_HOST = '127.0.0.1'
 DB_PORT = 3306
@@ -78,7 +80,120 @@ DB_DB = 'gevent_test'
 class TestMySQL(unittest.TestCase):
     log = logging.getLogger('TestMySQL')
 
+    def testUnique(self):
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+
+        cnn.query("drop table if exists tblunique")
+        cnn.query("create table tblunique (name VARCHAR(32) UNIQUE)")
+
+        # We insert the same character using two different encodings
+        cnn.query("insert into tblunique set name=\"kaka\"")
+
+        count = 0
+        
+        try:
+            cnn.query("insert into tblunique set name=\"kaka\"")
+            self.fail('expected timeout')
+        except umysql.SQLError, e:
+            pass
+        cnn.query("select * from tblunique")
+        cnn.close()
+
+    def testDoubleConnect(self):
+        cnn = umysql.Connection()
+        cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
+        time.sleep(11)
+        cnn.close()
+        time.sleep(1)
+        cnn = umysql.Connection()
+        cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
+ 
+    def testConnectTimeout(self):
+        cnn = umysql.Connection()
+        cnn.settimeout(1)
+        
+        start = time.clock()
+        try:
+            cnn.connect (DB_HOST, 31481, DB_USER, DB_PASSWD, DB_DB)
+            assert False, "Expected exception"
+        except(socket.error):
+            elapsed = time.clock() - start
+
+            if (elapsed > 2):
+                assert False, "Timeout isn't working"
+        
+        try:
+            res = cnn.query("select * from kaka");
+            assert False, "Expected exception"
+        except(socket.error):    
+            pass
+        cnn.close()
+
+    def testConnectFails(self):
+        cnn = umysql.Connection()
+
+        try:
+            cnn.connect (DB_HOST, 31337, DB_USER, DB_PASSWD, DB_DB)
+            assert False, "Expected exception"
+        except(socket.error):
+            pass
+        cnn.close()
+
+    def testConnectDNSFails(self):
+        cnn = umysql.Connection()
+
+        try:
+            cnn.connect ("thisplaceisnowere", 31337, DB_USER, DB_PASSWD, DB_DB)
+            assert False, "Expected exception"
+        except(socket.error):
+            pass
+        cnn.close()
+      
+ 
+
+        
+
     """
+   def testConcurrentQueryError(self):
+        connection = umysql.Connection()
+        connection.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+        errorCount = [ 0 ]
+
+        def query(cnn):
+            try:
+                cnn.query("select sleep(1)")
+            except(umysql.Error):
+                errorCount[0] = errorCount[0] + 1
+                return
+
+        ch1 = gevent.spawn(query, connection)
+        ch2 = gevent.spawn(query, connection)
+        ch3 = gevent.spawn(query, connection)
+        gevent.joinall([ch1, ch2, ch3])
+        
+        self.assertTrue(errorCount[0] > 0)
+        connection.close()
+ 
+    def testConcurrentConnectError(self):
+        connection = umysql.Connection()
+        errorCount = [ 0 ]
+
+        def query(cnn):
+            try:
+                cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+            except(umysql.Error):
+                errorCount[0] = errorCount[0] + 1
+                return
+
+        ch1 = gevent.spawn(query, connection)
+        ch2 = gevent.spawn(query, connection)
+        ch3 = gevent.spawn(query, connection)
+        gevent.joinall([ch1, ch2, ch3])
+        
+        self.assertTrue(errorCount[0] > 0)
+        connection.close()
+
     def testMySQLTimeout(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -100,87 +215,23 @@ class TestMySQL(unittest.TestCase):
 
         cnn.close()
 
-    def testDoubleConnect(self):
-        cnn = umysql.Connection()
-        cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
-        time.sleep(11)
-        cnn.close()
-        time.sleep(1)
-        cnn = umysql.Connection()
-        cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
-
-    def testConnectFails(self):
-        cnn = umysql.Connection()
-
-        try:
-            cnn.connect (DB_HOST, 31337, DB_USER, DB_PASSWD, DB_DB)
-            assert False, "Expected exception"
-        except(RuntimeError):
-            pass
-        pass
-
-    def testConnectDNSFails(self):
-        cnn = umysql.Connection()
-
-        try:
-            cnn.connect ("thisplaceisnowere", 31337, DB_USER, DB_PASSWD, DB_DB)
-            assert False, "Expected exception"
-        except(RuntimeError):
-            pass
-        pass
-    """
-        
     def testParallelQuery(self):
 
-        class MyThread (threading.Thread):
-        
-            def __init__(self, s):
-                self.s = s;
-                threading.Thread.__init__(self)
-        
-            def run(self):
-                cnn = umysql.Connection()
-                cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-                cnn.query("select sleep(%d)" % self.s)
-                cnn.close()
+        def query(s):
+            cnn = umysql.Connection()
+            cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+            cnn.query("select sleep(%d)" % s)
+            cnn.close()
 
         start = time.time()
-        
-        t1 = MyThread(1)
-        t1.start();
-        
-        t2 = MyThread(2)
-        t2.start();
-
-        t3 = MyThread(3)
-        t3.start();
-        
-        t3.join();
-        t2.join();
-        t1.join();
+        ch1 = gevent.spawn(query, 1)
+        ch2 = gevent.spawn(query, 2)
+        ch3 = gevent.spawn(query, 3)
+        gevent.joinall([ch1, ch2, ch3])
 
         end = time.time()
         self.assertAlmostEqual(3.0, end - start, places = 0)
-
     """
-    def testConnectTimeout(self):
-        cnn = umysql.Connection()
-        cnn.settimeout(1)
-        
-        start = time.clock()
-        try:
-            cnn.connect (DB_HOST, 31481, DB_USER, DB_PASSWD, DB_DB)
-
-        except(RuntimeError):
-            elapsed = time.clock() - start
-
-            if (elapsed > 2):
-                assert False, "Timeout isn't working"
-            return
-        
-        assert False, "Expected expection"
-    
- 
         
     def testConnectTwice(self):
         cnn = umysql.Connection()
@@ -188,12 +239,11 @@ class TestMySQL(unittest.TestCase):
         try:
             cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
             assert False, "Expected exception"
-        except(RuntimeError):
+        except:
             pass
         pass
-
-
-        
+        cnn.close()
+            
     def testConnectClosed(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -213,6 +263,8 @@ class TestMySQL(unittest.TestCase):
             assert False, "Expected exception"
         except(RuntimeError):
             pass
+        cnn.close()
+        
         
     def testMySQLClient(self):
         cnn = umysql.Connection()
@@ -285,6 +337,7 @@ class TestMySQL(unittest.TestCase):
         self.assertEquals((2, 'test2'), rs.rows[2])
 
         #this should not work, cursor was closed
+        cnn.close()
 
     def testLargePackets(self):
         cnn = umysql.Connection()
@@ -379,7 +432,8 @@ class TestMySQL(unittest.TestCase):
         self.assertEquals(str, type(b2))
         self.assertEquals(256, len(b2))
         self.assertEquals(blob, b2)
-    
+        cnn.close()
+
     def testAutoInc(self):
 
         cnn = umysql.Connection()
@@ -446,6 +500,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_id, test_bigint, test_bigint2 from tblbigint where test_bigint = test_bigint2")
         result = rs.rows
         self.assertEquals([(1, BIGNUM, BIGNUM), (2, BIGNUM, BIGNUM)], result)
+        cnn.close()
 
     def testDate(self):
         # Tests the behaviour of insert/select with mysql/DATE <-> python/datetime.date
@@ -470,6 +525,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_id, test_date, test_date2 from tbldate where test_date = test_date2")
         result = rs.rows
         self.assertEquals([(1, d_date, d_date)], result)
+        cnn.close()
 
     def testDateTime(self):
         # Tests the behaviour of insert/select with mysql/DATETIME <-> python/datetime.datetime
@@ -495,6 +551,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_id, test_date, test_date2 from tbldate where test_date = test_date2")
         result = rs.rows
         self.assertEquals([(1, d_date, d_date)], result)
+        cnn.close()
 
     def testZeroDates(self):
         # Tests the behaviour of zero dates
@@ -513,6 +570,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_id, test_date, test_datetime from tbldate where test_id = 1")
         result = rs.rows
         self.assertEquals([(1, None, None)], result)
+        cnn.close()
 
     def testUnicodeUTF8(self):
         peacesign_unicode = u"\u262e"
@@ -532,7 +590,8 @@ class TestMySQL(unittest.TestCase):
 
         # We expect unicode strings back
         self.assertEquals([(1, peacesign_unicode), (2, peacesign_unicode)], result)
-  
+        cnn.close()
+
     def testBinary(self):
         peacesign_binary = "\xe2\x98\xae"
         peacesign_binary2 = "\xe2\x98\xae" * 10
@@ -551,6 +610,7 @@ class TestMySQL(unittest.TestCase):
 
         # We expect binary strings back
         self.assertEquals([(1, peacesign_binary),(2, peacesign_binary2)], result)
+        cnn.close()
 
     
     def testBlob(self):
@@ -571,6 +631,7 @@ class TestMySQL(unittest.TestCase):
 
         # We expect binary strings back
         self.assertEquals([(1, peacesign_binary),(2, peacesign_binary2)], result)    
+        cnn.close()
 
     def testCharsets(self):
         aumlaut_unicode = u"\u00e4"
@@ -599,12 +660,9 @@ class TestMySQL(unittest.TestCase):
             rs = cnn.query("select test_mode, test_utf, test_latin1 from tblutf")
             result = rs.rows
             self.assertEquals(result, expected)
-            
-    """
-if __name__ == '__main__':
-    unittest.main()
-            
-"""            
+
+        cnn.close()
+    
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
@@ -613,4 +671,3 @@ if __name__ == '__main__':
         unittest.main()
         heap = hp.heapu()
         print heap
-"""        

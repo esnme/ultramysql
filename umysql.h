@@ -85,14 +85,14 @@ typedef struct
 
 typedef struct __UMConnectionCAPI
 {
-  void *(*createSocket)(int family, int type, int proto);
-  int (*getSocketFD)(void *instance);
-  void (*deleteSocket)(void *instance);
-  void (*closeSocket)(void *instance);
-  int (*wouldBlock)(void *instance, int fd, int ops, int timeout);
+  void *(*getSocket)();
+  void (*deleteSocket)(void *sock);
+  void (*closeSocket)(void *sock);
   int (*connectSocket)(void *sock, const char *host, int port);
-  int (*setTimeout)(void *sock, int timeout);
+  int (*setTimeout)(void *sock, int timeoutSec);
   void (*clearException)(void);
+  int (*recvSocket)(void *sock, char *buffer, int cbBuffer);
+  int (*sendSocket)(void *sock, const char *buffer, int cbBuffer);
 
   void *(*createResult)(int columns);
   void (*resultSetField)(void *result, int ifield, UMTypeInfo *ti, void *name, size_t cbName);

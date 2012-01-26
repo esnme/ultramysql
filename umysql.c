@@ -121,13 +121,13 @@ typedef struct {
   PyObject *(*PFN_PyUnicode_Encode)(const Py_UNICODE *data, Py_ssize_t length, const char *errors);
 } Connection;
 
-void *API_createSocket(int family, int type, int proto);
-int API_getSocketFD(void *sock);
+void *API_getSocket();
 void API_closeSocket(void *sock);
 void API_deleteSocket(void *sock);
-int API_wouldBlock(void *sock, int fd, int ops, int timeout);
 int API_connectSocket(void *sock, const char *host, int port);
 int API_setTimeout(void *sock, int timeoutSec);
+int API_recvSocket(void *sock, char *buffer, int cbBuffer);
+int API_sendSocket(void *sock, const char *buffer, int cbBuffer);
 
 void API_clearException(void)
 {
@@ -665,14 +665,14 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
 
 
 UMConnectionCAPI capi = {
-  API_createSocket,
-  API_getSocketFD,
+  API_getSocket,
   API_deleteSocket,
   API_closeSocket,
-  API_wouldBlock,
   API_connectSocket,
   API_setTimeout,
   API_clearException,
+  API_recvSocket,
+  API_sendSocket,
   API_createResult,
   API_resultSetField,
   API_resultRowBegin,
@@ -857,7 +857,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 
   if (!UMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, charset))
   {
-    return HandleError(self, "connect");
+    return NULL;
   }
 
   Py_RETURN_NONE;
@@ -1250,84 +1250,12 @@ static void Connection_Destructor(Connection *self)
   PRINTMARK();
 }
 
-PyObject *_Connection_connect(Connection *self, PyObject *args)
-{
-  PyObject *result = Connection_connect(self, args);
-  if (result == NULL)
-  {
-    if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
-    return NULL;
-  }
-
-  if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
-
-  return result;
-}
-
-
-PyObject *_Connection_query(Connection *self, PyObject *args)
-{
-  PyObject *result = Connection_query(self, args);
-  if (result == NULL)
-  {
-    if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
-    return NULL;
-  }
-
-  if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
-
-  return result;
-}
-
-PyObject *_Connection_close(Connection *self, PyObject *args)
-{
-  PyObject *result = Connection_close(self, args);
-  if (result == NULL)
-  {
-    if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
-    return NULL;
-  }
-
-  if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
-
-  return result;
-}
-
-PyObject *_Connection_isConnected(Connection *self, PyObject *args)
-{
-  PyObject *result = Connection_isConnected(self, args);
-  if (result == NULL)
-  {
-    if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
-    return NULL;
-  }
-
-  if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
-
-  return result;
-}
-
-PyObject *_Connection_setTimeout(Connection *self, PyObject *args)
-{
-  PyObject *result = Connection_setTimeout(self, args);
-  if (result == NULL)
-  {
-    if (!PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception not set in %s", __FUNCTION__);
-    return NULL;
-  }
-
-  if (PyErr_Occurred()) return PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
-
-  return result;
-}
-
-
 static PyMethodDef Connection_methods[] = {
-  {"connect", (PyCFunction)			_Connection_connect,			METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
-  {"query", (PyCFunction)				_Connection_query,				METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
-  {"close", (PyCFunction)	_Connection_close,	METH_NOARGS, "Closes connection"},
-  {"is_connected", (PyCFunction) _Connection_isConnected, METH_NOARGS, "Check connection status"},
-  {"settimeout", (PyCFunction) _Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},
+  {"connect", (PyCFunction)			Connection_connect,			METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
+  {"query", (PyCFunction)				Connection_query,				METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
+  {"close", (PyCFunction)	Connection_close,	METH_NOARGS, "Closes connection"},
+  {"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, "Check connection status"},
+  {"settimeout", (PyCFunction) Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},
   {NULL}
 };
 static PyMemberDef Connection_members[] = {

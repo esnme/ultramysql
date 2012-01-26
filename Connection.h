@@ -94,7 +94,6 @@ private:
 	std::string m_database;
 	bool m_autoCommit;
 	MYSQL_CHARSETS m_charset;
-	SOCKET m_sockfd;
 	void *m_sockInst;
 	PacketReader m_reader;
 	PacketWriter m_writer;
