@@ -58,7 +58,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 #include "PacketReader.h"
-#include "amdefs.h"
+#include "mysqldefs.h"
 #include <assert.h>
 #include "socketdefs.h"
 

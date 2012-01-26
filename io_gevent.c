@@ -57,7 +57,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#include <amysql.h>
+#include <umysql.h>
 #include <Python.h>
 #include <stdio.h>
 #include <time.h>

@@ -71,7 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
 #define PRINTMARK() 		
 
-Connection::Connection (AMConnectionCAPI *_capi) 
+Connection::Connection (UMConnectionCAPI *_capi) 
 	:	m_reader(MYSQL_RX_BUFFER_SIZE)
 	, m_writer(MYSQL_TX_BUFFER_SIZE)
 {
@@ -82,9 +82,9 @@ Connection::Connection (AMConnectionCAPI *_capi)
 	m_sockfd = -1;
 	m_sockInst = NULL;
 	m_errno = -1;
-	memcpy (&m_capi, _capi, sizeof (AMConnectionCAPI));
+	memcpy (&m_capi, _capi, sizeof (UMConnectionCAPI));
 	m_dbgMethodProgress = 0;
-	m_errorType = AME_OTHER;
+	m_errorType = UME_OTHER;
 }
 
 Connection::~Connection()
@@ -142,7 +142,7 @@ bool Connection::readSocket()
 	{
 		// Socket buffer got full!
 
-		setError("Socket receive buffer full", 0, AME_OTHER);
+		setError("Socket receive buffer full", 0, UME_OTHER);
 		return false;
 	}
 
@@ -156,13 +156,13 @@ bool Connection::readSocket()
 		}
 
 		int sockError = SocketGetLastError();
-		setError("Socket receive failed",  sockError, AME_OTHER);
+		setError("Socket receive failed",  sockError, UME_OTHER);
 		return false;
 	}
 	else
 	if (recvResult == 0)
 	{
-		setError("Connection reset by peer when receiving", 0, AME_OTHER);
+		setError("Connection reset by peer when receiving", 0, UME_OTHER);
 		return false;
 	}
 
@@ -188,7 +188,7 @@ bool Connection::writeSocket()
 		}
 
 		PRINTMARK();
-		setError("Socket send failed", SocketGetLastError(), AME_OTHER);
+		setError("Socket send failed", SocketGetLastError(), UME_OTHER);
 		return false;
 	}
 
@@ -249,13 +249,13 @@ bool Connection::processHandshake()
 	
 	if (protocolVersion == 0xff)
 	{
-		setError("Too many connections reported by server", 0, AME_OTHER);
+		setError("Too many connections reported by server", 0, UME_OTHER);
 		return false;
 	}
 	else
 	if (protocolVersion != MYSQL_PROTOCOL_VERSION)
 	{
-		setError("Protocol version not supported(1)", 0, AME_OTHER);
+		setError("Protocol version not supported(1)", 0, UME_OTHER);
 		return false;
 	}
 
@@ -268,7 +268,7 @@ bool Connection::processHandshake()
 
 	if (!(serverCaps & MCP_PROTOCOL_41))
 	{
-		setError("Authentication < 4.1 not supported", 1, AME_OTHER);
+		setError("Authentication < 4.1 not supported", 1, UME_OTHER);
 		return false;
 	}
 
@@ -284,7 +284,7 @@ bool Connection::processHandshake()
 	}
 	else
 	{
-		setError("Authentication < 4.1 not supported", 2, AME_OTHER);
+		setError("Authentication < 4.1 not supported", 2, UME_OTHER);
 		return false;
 	}
 
@@ -295,7 +295,7 @@ bool Connection::processHandshake()
 
 	if (!(serverCaps & MCP_CONNECT_WITH_DB) && !m_database.empty())
 	{
-		setError("Protocol < 4.1 not supported", 3, AME_OTHER);
+		setError("Protocol < 4.1 not supported", 3, UME_OTHER);
 		return false;
 	}
 
@@ -368,7 +368,7 @@ bool Connection::recvPacket()
 
 		time_t tsStart = time (0);
 
-		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, AMC_READ, m_timeout == -1 ? 10 : m_timeout))
+		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, UMC_READ, m_timeout == -1 ? 10 : m_timeout))
 		{
 			return false;
 		}
@@ -397,7 +397,7 @@ bool Connection::sendPacket()
 			break;
 		}
 
-		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, AMC_WRITE, m_timeout == -1 ? 10 : m_timeout))
+		if (!m_capi.wouldBlock(m_sockInst, m_sockfd, UMC_WRITE, m_timeout == -1 ? 10 : m_timeout))
 		{
 			return false;
 		}
@@ -406,7 +406,7 @@ bool Connection::sendPacket()
 	return true;
 }
 
-void Connection::setError (const char *_message, int _errno, AMErrorType _type)
+void Connection::setError (const char *_message, int _errno, UMErrorType _type)
 {
 	m_errorMessage = _message;
 	m_errno = _errno;
@@ -414,7 +414,7 @@ void Connection::setError (const char *_message, int _errno, AMErrorType _type)
 
 	PRINTMARK();
 
-	if (_type != AME_MYSQL)
+	if (_type != UME_MYSQL)
 	{
 
 		if (m_sockInst)
@@ -455,7 +455,7 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 		NOTE: We don't call setError here because it will close the socket worsening the concurrent access error making it impossible to trace */
 		m_errorMessage = "Concurrent access in connect method";
 		m_errno = 0;
-		m_errorType = AME_OTHER;
+		m_errorType = UME_OTHER;
 		m_dbgMethodProgress --;
 		return false;
 	}
@@ -464,7 +464,7 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
 	if (m_sockInst != NULL)
 	{
 		m_dbgMethodProgress --;
-		setError ("Socket already connected", 0, AME_OTHER);
+		setError ("Socket already connected", 0, UME_OTHER);
 		return false;
 	}
 
@@ -604,7 +604,7 @@ void Connection::handleErrorPacket()
 	UINT8 *message = m_reader.readBytes(len);
 
 	std::string errorMessage((char *) message, len);
-	setError (errorMessage.c_str (), (int) errnum, AME_MYSQL);
+	setError (errorMessage.c_str (), (int) errnum, UME_MYSQL);
 }
 
 void *Connection::handleResultPacket(int _fieldCount)
@@ -619,7 +619,7 @@ void *Connection::handleResultPacket(int _fieldCount)
 
 	// Read Field packets
 
-	AMTypeInfo *typeInfo = (AMTypeInfo *) alloca(fieldCount * sizeof(AMTypeInfo));
+	UMTypeInfo *typeInfo = (UMTypeInfo *) alloca(fieldCount * sizeof(UMTypeInfo));
 	int iTypeInfo = 0;
 	
 	while (true)
@@ -736,7 +736,7 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 		NOTE: We don't call setError here because it will close the socket worsening the concurrent access error making it impossible to trace */
 		m_errorMessage = "Concurrent access in query method";
 		m_errno = 0;
-		m_errorType = AME_OTHER;
+		m_errorType = UME_OTHER;
 		m_dbgMethodProgress --;
 		return NULL;
 	}
@@ -744,7 +744,7 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 	if (m_sockInst == NULL)
 	{
 		PRINTMARK();
-		setError ("Not connected", 0, AME_OTHER);
+		setError ("Not connected", 0, UME_OTHER);
 		m_dbgMethodProgress --;
 		return NULL;
 	}
@@ -754,7 +754,7 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 	if (len > m_writer.getSize () - (MYSQL_PACKET_HEADER_SIZE + 1))
 	{
 		PRINTMARK();
-		setError ("Query too big", 0, AME_OTHER);
+		setError ("Query too big", 0, UME_OTHER);
 		m_dbgMethodProgress --;
 		return NULL;
 	}
@@ -795,7 +795,7 @@ void *Connection::query(const char *_query, size_t _cbQuery)
 
 		case 0xfe:
 			PRINTMARK();
-			setError ("Unexpected EOF when decoding result", 0, AME_OTHER);
+			setError ("Unexpected EOF when decoding result", 0, UME_OTHER);
 			m_dbgMethodProgress --;
 			return NULL;
 

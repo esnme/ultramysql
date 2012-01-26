@@ -57,23 +57,23 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#ifndef __AMYSQL_H__
-#define __AMYSQL_H__
+#ifndef __UMYSQL_H__
+#define __UMYSQL_H__
 
-#include "amdefs.h"
+#include "mysqldefs.h"
 
 #define EXPORTFUNCTION extern "C" __declspec(dllexport)
 
-enum AMConnection_Ops
+enum UMConnection_Ops
 {
-	AMC_READ,
-	AMC_WRITE,
+	UMC_READ,
+	UMC_WRITE,
 };
 
-enum AMErrorType
+enum UMErrorType
 {
-	AME_OTHER,
-	AME_MYSQL,
+	UME_OTHER,
+	UME_MYSQL,
 };
 
 typedef struct 
@@ -81,9 +81,9 @@ typedef struct
 	UINT8 type;
 	UINT16 flags;
 	UINT16 charset;
-} AMTypeInfo;
+} UMTypeInfo;
 
-typedef struct __AMConnectionCAPI
+typedef struct __UMConnectionCAPI
 {
 	void *(*createSocket)(int family, int type, int proto);
 	int (*getSocketFD)(void *instance);
@@ -95,18 +95,18 @@ typedef struct __AMConnectionCAPI
 	void (*clearException)(void);
 
 	void *(*createResult)(int columns);
-	void (*resultSetField)(void *result, int ifield, AMTypeInfo *ti, void *name, size_t cbName);
+	void (*resultSetField)(void *result, int ifield, UMTypeInfo *ti, void *name, size_t cbName);
 	void (*resultRowBegin)(void *result);
-	int (*resultRowValue)(void *result, int icolumn, AMTypeInfo *ti, void *value, size_t cbValue);
+	int (*resultRowValue)(void *result, int icolumn, UMTypeInfo *ti, void *value, size_t cbValue);
 	void (*resultRowEnd)(void *result);
 	void (*destroyResult)(void *result);
 	void *(*resultOK)(UINT64 affected, UINT64 insertId, int serverStatus, const char *message, size_t len);
 
 
-} AMConnectionCAPI;
+} UMConnectionCAPI;
 
 
-typedef void * AMConnection;
+typedef void * UMConnection;
 
 //#ifdef _WIN32
 //#define EXPORT_ATTR __declspec(dllexport)
@@ -116,15 +116,15 @@ typedef void * AMConnection;
 #define EXPORT_ATTR
 //#endif
 
-AMConnection AMConnection_Create(AMConnectionCAPI *_capi);
-void AMConnection_Destroy(AMConnection _conn);
-void *AMConnection_Query(AMConnection conn, const char *_query, size_t _cbQuery);
-int  AMConnection_Connect (AMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, int _charset);
-int AMConnection_GetLastError (AMConnection conn, const char **_ppOutMessage, int *_outErrno, int *_type);
-int AMConnection_GetTxBufferSize (AMConnection conn);
-int AMConnection_GetRxBufferSize (AMConnection conn);
-int AMConnection_IsConnected (AMConnection conn);
-int AMConnection_Close (AMConnection conn);
-int AMConnection_SetTimeout(AMConnection conn, int timeout);
+UMConnection UMConnection_Create(UMConnectionCAPI *_capi);
+void UMConnection_Destroy(UMConnection _conn);
+void *UMConnection_Query(UMConnection conn, const char *_query, size_t _cbQuery);
+int  UMConnection_Connect (UMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, int _charset);
+int UMConnection_GetLastError (UMConnection conn, const char **_ppOutMessage, int *_outErrno, int *_type);
+int UMConnection_GetTxBufferSize (UMConnection conn);
+int UMConnection_GetRxBufferSize (UMConnection conn);
+int UMConnection_IsConnected (UMConnection conn);
+int UMConnection_Close (UMConnection conn);
+int UMConnection_SetTimeout(UMConnection conn, int timeout);
 
 #endif

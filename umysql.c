@@ -57,7 +57,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#include <amysql.h>
+#include <umysql.h>
 #include <Python.h>
 #include <structmember.h>
 #include <stdio.h>
@@ -92,8 +92,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static PyTypeObject ConnectionType;
 static PyTypeObject ResultSetType;
 
-PyObject *amysql_Error;
-PyObject *amysql_SQLError;
+PyObject *umysql_Error;
+PyObject *umysql_SQLError;
 
 typedef struct {
   PyObject_HEAD
@@ -109,7 +109,7 @@ int ResultSet_setup(ResultSet *self, int columns);
 
 typedef struct {
   PyObject_HEAD
-    AMConnection conn;
+    UMConnection conn;
   int sockfd;
 
   PyObject *Error;
@@ -143,7 +143,7 @@ void *API_createResult(int columns)
   return ret;
 }
 
-void API_resultSetField(void *result, int column, AMTypeInfo *ti, void *_name, size_t _cbName)
+void API_resultSetField(void *result, int column, UMTypeInfo *ti, void *_name, size_t _cbName)
 {
   PyObject *field = PyTuple_New(2);
   PyTuple_SET_ITEM(field, 0, PyString_FromStringAndSize((const char *)_name, _cbName));
@@ -250,7 +250,7 @@ INT64 parseINT64(char *start, char *end)
   return intValue * intNeg;
 }
 
-static PyObject *DecodeString (AMTypeInfo *ti, char *value, size_t cbValue)
+static PyObject *DecodeString (UMTypeInfo *ti, char *value, size_t cbValue)
 {
   //FIXME: This code must be endiness aware of system isn't little endian
 
@@ -493,7 +493,7 @@ static PyObject *DecodeString (AMTypeInfo *ti, char *value, size_t cbValue)
 }
 
 
-int API_resultRowValue(void *result, int column, AMTypeInfo *ti, char *value, size_t cbValue)
+int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, size_t cbValue)
 {
   PyObject *valobj = NULL;
 
@@ -652,7 +652,7 @@ int API_resultRowValue(void *result, int column, AMTypeInfo *ti, char *value, si
       return FALSE;
     }
 
-    PyErr_Format (amysql_Error, "Unable to convert field of type %d", ti->type);
+    PyErr_Format (umysql_Error, "Unable to convert field of type %d", ti->type);
     return FALSE;
   }
 
@@ -664,7 +664,7 @@ int API_resultRowValue(void *result, int column, AMTypeInfo *ti, char *value, si
 
 
 
-AMConnectionCAPI capi = {
+UMConnectionCAPI capi = {
   API_createSocket,
   API_getSocketFD,
   API_deleteSocket,
@@ -685,12 +685,12 @@ AMConnectionCAPI capi = {
 
 int Connection_init(Connection *self, PyObject *arg)
 {
-  self->conn = AMConnection_Create (&capi);
+  self->conn = UMConnection_Create (&capi);
 
-  self->rxBufferSize = AMConnection_GetRxBufferSize (self->conn);
-  self->txBufferSize = AMConnection_GetTxBufferSize (self->conn);
-  self->Error = amysql_Error;
-  self->SQLError = amysql_SQLError;
+  self->rxBufferSize = UMConnection_GetRxBufferSize (self->conn);
+  self->txBufferSize = UMConnection_GetTxBufferSize (self->conn);
+  self->Error = umysql_Error;
+  self->SQLError = umysql_SQLError;
 
   self->PFN_PyUnicode_Encode = NULL;
 
@@ -712,7 +712,7 @@ PyObject *Connection_setTimeout(Connection *self, PyObject *args)
     return NULL;
   }
 
-  if (!AMConnection_SetTimeout(self->conn, timeout))
+  if (!UMConnection_SetTimeout(self->conn, timeout))
   {
     return HandleError(self, "setTimeout");
   }
@@ -723,7 +723,7 @@ PyObject *Connection_setTimeout(Connection *self, PyObject *args)
 
 PyObject *Connection_isConnected(Connection *self, PyObject *args)
 {
-  if (AMConnection_IsConnected(self->conn))
+  if (UMConnection_IsConnected(self->conn))
   {
     Py_RETURN_TRUE;
   }
@@ -744,28 +744,28 @@ PyObject *HandleError(Connection *self, const char *funcName)
   int errCode;
   int errType;
 
-  if (AMConnection_GetLastError (self->conn, &errorMessage, &errCode, &errType))
+  if (UMConnection_GetLastError (self->conn, &errorMessage, &errCode, &errType))
   {
     if (PyErr_Occurred())
     {
       value = Py_BuildValue("(s,o,i,i,s)", "Python exception when local error is set", PyErr_Occurred(), errCode, errType, errorMessage);
       PyErr_Clear();
-      PyErr_SetObject(amysql_Error, value);
+      PyErr_SetObject(umysql_Error, value);
       Py_DECREF(value);
       return NULL;
     }
 
     switch (errType)
     {
-    case AME_OTHER:
+    case UME_OTHER:
       value = Py_BuildValue("(i,s)", errCode, errorMessage);
-      PyErr_SetObject(amysql_Error, value);
+      PyErr_SetObject(umysql_Error, value);
       Py_DECREF(value);
       return NULL;
 
-    case AME_MYSQL:
+    case UME_MYSQL:
       value = Py_BuildValue("(i,s)", errCode, errorMessage);
-      PyErr_SetObject(amysql_SQLError, value);
+      PyErr_SetObject(umysql_SQLError, value);
       Py_DECREF(value);
       return NULL;
 
@@ -796,7 +796,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 {
   /*
   Args:
-  AMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int _autoCommit, const char *_charset*/
+  UMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int _autoCommit, const char *_charset*/
 
   char *host;
   int port;
@@ -855,7 +855,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
     self->PFN_PyUnicode_Encode = PyUnicode_EncodeUTF8;
   }
 
-  if (!AMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, charset))
+  if (!UMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, charset))
   {
     return HandleError(self, "connect");
   }
@@ -1140,7 +1140,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
   PyObject *iterable = NULL;
   PyObject *escapedQuery = NULL;
 
-  if (!AMConnection_IsConnected(self->conn))
+  if (!UMConnection_IsConnected(self->conn))
   {
     return PyErr_Format(PyExc_RuntimeError, "Not connected");
   }
@@ -1212,7 +1212,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     escapedQuery = query;
   }
 
-  ret =  AMConnection_Query(self->conn, PyString_AS_STRING(escapedQuery), PyString_GET_SIZE(escapedQuery));
+  ret =  UMConnection_Query(self->conn, PyString_AS_STRING(escapedQuery), PyString_GET_SIZE(escapedQuery));
 
   Py_DECREF(escapedQuery);
 
@@ -1231,7 +1231,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 
 PyObject *Connection_close(Connection *self, PyObject *notused)
 {
-  if (!AMConnection_Close(self->conn))
+  if (!UMConnection_Close(self->conn))
   {
     return HandleError(self, "close");
   }
@@ -1242,7 +1242,7 @@ PyObject *Connection_close(Connection *self, PyObject *notused)
 static void Connection_Destructor(Connection *self)
 {
   PRINTMARK();
-  AMConnection_Destroy(self->conn);
+  UMConnection_Destroy(self->conn);
   PRINTMARK();
   PyObject_Del(self);
   PRINTMARK();
@@ -1344,7 +1344,7 @@ static PyMemberDef Connection_members[] = {
 static PyTypeObject ConnectionType = { 
   PyObject_HEAD_INIT(NULL)
   0,				/* ob_size        */
-  "amysql.Connection",		/* tp_name        */
+  "umysql.Connection",		/* tp_name        */
   sizeof(Connection),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
   Connection_Destructor,		/* tp_dealloc     */
@@ -1447,7 +1447,7 @@ static PyMemberDef ResultSet_members[] = {
 static PyTypeObject ResultSetType = { 
   PyObject_HEAD_INIT(NULL)
   0,				/* ob_size        */
-  "amysql.ResultSet",		/* tp_name        */
+  "umysql.ResultSet",		/* tp_name        */
   sizeof(ResultSet),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
   ResultSet_Destructor,		/* tp_dealloc     */
@@ -1513,13 +1513,13 @@ StandardError
 */
 
 PyMODINIT_FUNC
-  initamysql(void) 
+  initumysql(void) 
 {
   PyObject* m;
   PyObject *dict;
   PyDateTime_IMPORT;
 
-  m = Py_InitModule3("amysql", methods,
+  m = Py_InitModule3("umysql", methods,
     "");
   if (m == NULL)
     return;
@@ -1538,9 +1538,9 @@ PyMODINIT_FUNC
   Py_INCREF(&ResultSetType);
   PyModule_AddObject(m, "ResultSet", (PyObject *)&ResultSetType);
 
-  amysql_Error = PyErr_NewException("amysql.Error", PyExc_StandardError, NULL);
-  amysql_SQLError = PyErr_NewException("amysql.SQLError", amysql_Error, NULL);
+  umysql_Error = PyErr_NewException("umysql.Error", PyExc_StandardError, NULL);
+  umysql_SQLError = PyErr_NewException("umysql.SQLError", umysql_Error, NULL);
 
-  PyDict_SetItemString(dict, "Error", amysql_Error);
-  PyDict_SetItemString(dict, "SQLError", amysql_SQLError);
+  PyDict_SetItemString(dict, "Error", umysql_Error);
+  PyDict_SetItemString(dict, "SQLError", umysql_SQLError);
 }

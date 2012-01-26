@@ -57,11 +57,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#ifndef __AMCONNECTION_H__
-#define __AMCONNECTION_H___
+#ifndef __UMCONNECTION_H__
+#define __UMCONNECTION_H___
 
 #include <string>
-#include "amysql.h"
+#include "umysql.h"
 #include "socketdefs.h"
 #include "PacketReader.h"
 #include "PacketWriter.h"
@@ -104,9 +104,9 @@ private:
 	std::string m_errorMessage;
 	int m_errno;
 	int m_timeout;
-	AMErrorType m_errorType;
+	UMErrorType m_errorType;
 
-	AMConnectionCAPI m_capi;
+	UMConnectionCAPI m_capi;
 
 	int m_dbgMethodProgress;
 
@@ -114,7 +114,7 @@ public:
 
 
 public:
-	Connection(AMConnectionCAPI *_capi);
+	Connection(UMConnectionCAPI *_capi);
 	~Connection();
 	bool connect(const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, MYSQL_CHARSETS _charset);
 	//void handleSocketEvent (SocketEvents _evt);

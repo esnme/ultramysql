@@ -59,7 +59,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 extern "C"
 {
-	#include "amysql.h"
+	#include "umysql.h"
 }
 
 #include "Connection.h"

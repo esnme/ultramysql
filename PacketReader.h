@@ -57,10 +57,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#ifndef __AMPACKETREADER_H__
-#define __AMPACKETREADER_H__
+#ifndef __PACKETREADER_H__
+#define __PACKETREADER_H__
 
-#include "amdefs.h"
+#include "mysqldefs.h"
 
 class PacketReader
 {
