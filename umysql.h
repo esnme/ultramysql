@@ -1,4 +1,4 @@
-"""
+/*
 Copyright (c) 2011, Jonas Tarnstrom and ESN Social Software AB
 All rights reserved.
 
@@ -55,43 +55,76 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
 
-from distutils.core import setup, Extension
-import shutil
-import sys
+*/
+#ifndef __AMYSQL_H__
+#define __AMYSQL_H__
 
-"""
-try:
-	shutil.rmtree("./build")
-except(OSError):
-	pass
-"""    
-    
-libs = []
+#include "amdefs.h"
 
-if sys.platform != "win32":
-    libs.append("stdc++")
-    
-if sys.platform == "win32":
-    libs.append("ws2_32")
+#define EXPORTFUNCTION extern "C" __declspec(dllexport)
+
+enum AMConnection_Ops
+{
+	AMC_READ,
+	AMC_WRITE,
+};
+
+enum AMErrorType
+{
+	AME_OTHER,
+	AME_MYSQL,
+};
+
+typedef struct 
+{
+	UINT8 type;
+	UINT16 flags;
+	UINT16 charset;
+} AMTypeInfo;
+
+typedef struct __AMConnectionCAPI
+{
+	void *(*createSocket)(int family, int type, int proto);
+	int (*getSocketFD)(void *instance);
+	void (*deleteSocket)(void *instance);
+	void (*closeSocket)(void *instance);
+	int (*wouldBlock)(void *instance, int fd, int ops, int timeout);
+	int (*connectSocket)(void *sock, const char *host, int port);
+	int (*setTimeout)(void *sock, int timeout);
+	void (*clearException)(void);
+
+	void *(*createResult)(int columns);
+	void (*resultSetField)(void *result, int ifield, AMTypeInfo *ti, void *name, size_t cbName);
+	void (*resultRowBegin)(void *result);
+	int (*resultRowValue)(void *result, int icolumn, AMTypeInfo *ti, void *value, size_t cbValue);
+	void (*resultRowEnd)(void *result);
+	void (*destroyResult)(void *result);
+	void *(*resultOK)(UINT64 affected, UINT64 insertId, int serverStatus, const char *message, size_t len);
 
 
-module1 = Extension('umysql',
-                sources = ['umysql.c', 'io_cpython.c', 'capi.cpp', 'Connection.cpp', 'PacketReader.cpp', 'PacketWriter.cpp', 'SHA1.cpp'],
-                include_dirs = ['./'],
-                library_dirs = [],
-                libraries=libs,
-                define_macros=[('WIN32_LEAN_AND_MEAN', None)])
-					
-setup (name = 'umysql',
-		version = '1.2',
-		description = 'Ultra fast MySQL driver for Python',
-		ext_modules = [module1],
-		author = "Jonas Tarnstrom",
-		author_email = "jonas.tarnstrom@esn.me",
-		maintainer = "Jonas Tarnstrom",
-		maintainer_email = "jonas.tarnstrom@esn.me",
-		license = "BSD")
+} AMConnectionCAPI;
 
-       
+
+typedef void * AMConnection;
+
+//#ifdef _WIN32
+//#define EXPORT_ATTR __declspec(dllexport)
+//#define EXPORT_ATTR __attribute__ ((dllexport))
+//#define EXPORT_ATTR extern "C" __declspec(dllexport)
+//#else
+#define EXPORT_ATTR
+//#endif
+
+AMConnection AMConnection_Create(AMConnectionCAPI *_capi);
+void AMConnection_Destroy(AMConnection _conn);
+void *AMConnection_Query(AMConnection conn, const char *_query, size_t _cbQuery);
+int  AMConnection_Connect (AMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, int _charset);
+int AMConnection_GetLastError (AMConnection conn, const char **_ppOutMessage, int *_outErrno, int *_type);
+int AMConnection_GetTxBufferSize (AMConnection conn);
+int AMConnection_GetRxBufferSize (AMConnection conn);
+int AMConnection_IsConnected (AMConnection conn);
+int AMConnection_Close (AMConnection conn);
+int AMConnection_SetTimeout(AMConnection conn, int timeout);
+
+#endif
