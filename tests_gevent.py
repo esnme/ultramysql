@@ -66,7 +66,7 @@ import logging
 import unittest
 import gevent
 import gevent.socket
-import amysql
+import umysql
 
 DB_HOST = '127.0.0.1'
 DB_PORT = 3306
@@ -78,7 +78,7 @@ class TestMySQL(unittest.TestCase):
     log = logging.getLogger('TestMySQL')
 
     def testUnique(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("drop table if exists tblunique")
@@ -92,13 +92,13 @@ class TestMySQL(unittest.TestCase):
         try:
             cnn.query("insert into tblunique set name=\"kaka\"")
             self.fail('expected timeout')
-        except amysql.SQLError, e:
+        except umysql.SQLError, e:
             pass
         cnn.query("select * from tblunique")
         cnn.close()
 
     def testMySQLTimeout(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         rs = cnn.query("select sleep(2)")
@@ -119,16 +119,16 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testDoubleConnect(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
         time.sleep(11)
         cnn.close()
         time.sleep(1)
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
 
     def testConnectTimeout(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.settimeout(1)
         
         start = time.clock()
@@ -146,12 +146,12 @@ class TestMySQL(unittest.TestCase):
         try:
             res = cnn.query("select * from kaka");
             assert False, "Expected exception"
-        except(amysql.Error):    
+        except(umysql.Error):    
             pass
         cnn.close()
     
     def testConnectFails(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
 
         try:
             cnn.connect (DB_HOST, 31337, DB_USER, DB_PASSWD, DB_DB)
@@ -161,7 +161,7 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testConnectDNSFails(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
 
         try:
             cnn.connect ("thisplaceisnowere", 31337, DB_USER, DB_PASSWD, DB_DB)
@@ -171,14 +171,14 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
         
     def testConcurrentQueryError(self):
-        connection = amysql.Connection()
+        connection = umysql.Connection()
         connection.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
         errorCount = [ 0 ]
 
         def query(cnn):
             try:
                 cnn.query("select sleep(1)")
-            except(amysql.Error):
+            except(umysql.Error):
                 errorCount[0] = errorCount[0] + 1
                 return
 
@@ -191,13 +191,13 @@ class TestMySQL(unittest.TestCase):
         connection.close()
 
     def testConcurrentConnectError(self):
-        connection = amysql.Connection()
+        connection = umysql.Connection()
         errorCount = [ 0 ]
 
         def query(cnn):
             try:
                 cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-            except(amysql.Error):
+            except(umysql.Error):
                 errorCount[0] = errorCount[0] + 1
                 return
 
@@ -213,7 +213,7 @@ class TestMySQL(unittest.TestCase):
     def testParallelQuery(self):
 
         def query(s):
-            cnn = amysql.Connection()
+            cnn = umysql.Connection()
             cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
             cnn.query("select sleep(%d)" % s)
             cnn.close()
@@ -229,25 +229,25 @@ class TestMySQL(unittest.TestCase):
  
         
     def testConnectTwice(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
         try:
             cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
             assert False, "Expected exception"
-        except(amysql.Error):
+        except(umysql.Error):
             pass
         pass
         cnn.close()
             
     def testConnectClosed(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
         self.assertEquals(True, cnn.is_connected())
         cnn.close()
         self.assertEquals(False, cnn.is_connected())
 
     def testConnectCloseQuery(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
         self.assertEquals(True, cnn.is_connected())
         cnn.close()
@@ -262,7 +262,7 @@ class TestMySQL(unittest.TestCase):
         
         
     def testMySQLClient(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         rs = cnn.query("select 1")
@@ -270,7 +270,7 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testConnectNoDb(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "")
 
         rs = cnn.query("select 1")
@@ -279,7 +279,7 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
     
     def testConnectAutoCommitOff(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "", False)
 
         rs = cnn.query("select 1")
@@ -288,7 +288,7 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testMySQLClient2(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("truncate tbltest")
@@ -308,7 +308,7 @@ class TestMySQL(unittest.TestCase):
 
     def testMySQLDBAPI(self):
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("truncate tbltest")
@@ -335,7 +335,7 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testLargePackets(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
         cnn.query("truncate tbltest")
 
@@ -364,7 +364,7 @@ class TestMySQL(unittest.TestCase):
         #and check that exception is thrown when trying to read larger packets
 
     def testEscapeArgs(self):
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("truncate tbltest")
@@ -404,7 +404,7 @@ class TestMySQL(unittest.TestCase):
     def testSelectUnicode(self):
         s = u'r\xc3\xa4ksm\xc3\xb6rg\xc3\xa5s'
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("truncate tbltest")
@@ -431,7 +431,7 @@ class TestMySQL(unittest.TestCase):
 
     def testAutoInc(self):
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("truncate tblautoincint")
@@ -478,7 +478,7 @@ class TestMySQL(unittest.TestCase):
 
         BIGNUM = 112233445566778899
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("drop table if exists tblbigint")
@@ -503,7 +503,7 @@ class TestMySQL(unittest.TestCase):
         d_date = datetime.date(2010, 02, 11)
         d_string = "2010-02-11"
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("drop table if exists tbldate")
@@ -528,7 +528,7 @@ class TestMySQL(unittest.TestCase):
         d_date = datetime.datetime(2010, 02, 11, 13, 37, 42)
         d_string = "2010-02-11 13:37:42"
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
 
@@ -553,7 +553,7 @@ class TestMySQL(unittest.TestCase):
         zero_datetime = "0000-00-00 00:00:00" 
         zero_date = "0000-00-00"
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("drop table if exists tbldate")
@@ -571,7 +571,7 @@ class TestMySQL(unittest.TestCase):
         peacesign_unicode = u"\u262e"
         peacesign_utf8 = "\xe2\x98\xae"
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("drop table if exists tblutf")
@@ -591,7 +591,7 @@ class TestMySQL(unittest.TestCase):
         peacesign_binary = "\xe2\x98\xae"
         peacesign_binary2 = "\xe2\x98\xae" * 10
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("drop table if exists tblbin")
@@ -612,7 +612,7 @@ class TestMySQL(unittest.TestCase):
         peacesign_binary = "\xe2\x98\xae"
         peacesign_binary2 = "\xe2\x98\xae" * 1024
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("drop table if exists tblblob")
@@ -633,7 +633,7 @@ class TestMySQL(unittest.TestCase):
         aumlaut_utf8 = "\xc3\xa4"
         aumlaut_latin1 = "\xe4"
 
-        cnn = amysql.Connection()
+        cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("drop table if exists tblutf")

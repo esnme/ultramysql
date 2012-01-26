@@ -141,7 +141,7 @@ protected:
 	void handleEOFPacket();
 	void *handleResultPacket(int fieldCount);
 	void *handleOKPacket();
-	void setError (const char *_message, int _errno, AMErrorType _type);
+	void setError (const char *_message, int _errno, UMErrorType _type);
 
 protected:
 };

@@ -5,16 +5,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
 3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-   This product includes software developed by ESN Social Software AB (www.esn.me).
+must display the following acknowledgement:
+This product includes software developed by ESN Social Software AB (www.esn.me).
 4. Neither the name of the ESN Social Software AB nor the
-   names of its contributors may be used to endorse or promote products
-   derived from this software without specific prior written permission.
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,16 +34,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
+* Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
+* Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-    * Neither the name of Hyves (Startphone Ltd.) nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
+* Neither the name of Hyves (Startphone Ltd.) nor the names of its
+contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -87,271 +87,271 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void *API_createSocket(int family, int type, int proto)
 {
-	/* Create a normal socket */
-	PyObject *sockobj;
-	//FIXME: PyModule will leak
-	static PyObject *sockmodule = NULL;
-	static PyObject *sockclass = NULL;
-	static int once = 1;
+  /* Create a normal socket */
+  PyObject *sockobj;
+  //FIXME: PyModule will leak
+  static PyObject *sockmodule = NULL;
+  static PyObject *sockclass = NULL;
+  static int once = 1;
 
-	if (once)
-	{
-		/*FIXME: References for module or class are never released */
-		sockmodule = PyImport_ImportModule ("gevent.socket");
+  if (once)
+  {
+    /*FIXME: References for module or class are never released */
+    sockmodule = PyImport_ImportModule ("gevent.socket");
 
-		if (sockmodule == NULL)
-		{
-			return NULL;
-		}
-		sockclass = PyObject_GetAttrString(sockmodule, "socket");
+    if (sockmodule == NULL)
+    {
+      return NULL;
+    }
+    sockclass = PyObject_GetAttrString(sockmodule, "socket");
 
-		if (sockclass == NULL)
-		{
-			return NULL;
-		}
+    if (sockclass == NULL)
+    {
+      return NULL;
+    }
 
-		//FIXME: PyType will leak
-		if (!PyType_Check(sockclass))
-		{
-			return NULL;
-		}
+    //FIXME: PyType will leak
+    if (!PyType_Check(sockclass))
+    {
+      return NULL;
+    }
 
-		if (!PyCallable_Check(sockclass))
-		{
-			return NULL;
-		}
-		
-		once = 0;
-	}
+    if (!PyCallable_Check(sockclass))
+    {
+      return NULL;
+    }
 
-	PRINTMARK();
-	sockobj = PyObject_Call (sockclass, PyTuple_New(0), NULL);
-	PRINTMARK();
+    once = 0;
+  }
 
-	if (sockobj == NULL)
-	{
-		PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception when creating socket");
-		return NULL;
-	}
+  PRINTMARK();
+  sockobj = PyObject_Call (sockclass, PyTuple_New(0), NULL);
+  PRINTMARK();
 
-	return sockobj;
+  if (sockobj == NULL)
+  {
+    PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception when creating socket");
+    return NULL;
+  }
+
+  return sockobj;
 }
 
 int API_setTimeout(void *sock, int timeoutSec)
 {
-	PyObject *intobj;
-	PyObject *retobj;
-	PyObject *methodObj;
+  PyObject *intobj;
+  PyObject *retobj;
+  PyObject *methodObj;
 
-	PRINTMARK();
-	intobj = PyFloat_FromDouble( (double) timeoutSec);
+  PRINTMARK();
+  intobj = PyFloat_FromDouble( (double) timeoutSec);
 
-	methodObj = PyString_FromString("settimeout");
-	PRINTMARK();
-	retobj = PyObject_CallMethodObjArgs ((PyObject *) sock, methodObj, intobj, NULL);
-	Py_DECREF(intobj);
-	Py_DECREF(methodObj);
-	PRINTMARK();
+  methodObj = PyString_FromString("settimeout");
+  PRINTMARK();
+  retobj = PyObject_CallMethodObjArgs ((PyObject *) sock, methodObj, intobj, NULL);
+  Py_DECREF(intobj);
+  Py_DECREF(methodObj);
+  PRINTMARK();
 
-	if (retobj == NULL)
-	{
-		if (!PyErr_Occurred())
-		{
-			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception when setting timeout");
-			return 0;
-		}
+  if (retobj == NULL)
+  {
+    if (!PyErr_Occurred())
+    {
+      PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception when setting timeout");
+      return 0;
+    }
 
-		return 0;
-	}
+    return 0;
+  }
 
-	Py_DECREF(retobj);
-	return 1;
+  Py_DECREF(retobj);
+  return 1;
 
 }   
 
 int API_getSocketFD(void *sock)
 {
-	int ret;
-	PyObject *fdobj;
-	PRINTMARK();
-	
-	fdobj = PyObject_CallMethod ((PyObject *) sock, "fileno", NULL);
-	PRINTMARK();
+  int ret;
+  PyObject *fdobj;
+  PRINTMARK();
 
-	if (fdobj == NULL)
-	{
-		PyErr_Clear();
-		PRINTMARK();
-		return -1;
-	}
+  fdobj = PyObject_CallMethod ((PyObject *) sock, "fileno", NULL);
+  PRINTMARK();
 
-	if (!PyInt_Check(fdobj))
-	{
-		PyErr_Clear();
-		Py_XDECREF(fdobj);
-		PRINTMARK();
-		return -1;
-	}
+  if (fdobj == NULL)
+  {
+    PyErr_Clear();
+    PRINTMARK();
+    return -1;
+  }
 
-	ret = PyInt_AS_LONG(fdobj);
-	
-	Py_DECREF(fdobj);
-	return ret;
+  if (!PyInt_Check(fdobj))
+  {
+    PyErr_Clear();
+    Py_XDECREF(fdobj);
+    PRINTMARK();
+    return -1;
+  }
+
+  ret = PyInt_AS_LONG(fdobj);
+
+  Py_DECREF(fdobj);
+  return ret;
 }
 
 void API_closeSocket(void *sock)
 {
-	PyObject *res = PyObject_CallMethod( (PyObject *) sock, "close", NULL);
-	PRINTMARK();
+  PyObject *res = PyObject_CallMethod( (PyObject *) sock, "close", NULL);
+  PRINTMARK();
 
-	if (res == NULL)
-	{
-		PyErr_Clear();
-		PRINTMARK();
-		return;
-	}
+  if (res == NULL)
+  {
+    PyErr_Clear();
+    PRINTMARK();
+    return;
+  }
 
-	Py_DECREF(res);
+  Py_DECREF(res);
 }
 
 void API_deleteSocket(void *sock)
 {
-	PRINTMARK();
-	Py_DECREF( (PyObject *) sock);
-	PRINTMARK();
+  PRINTMARK();
+  Py_DECREF( (PyObject *) sock);
+  PRINTMARK();
 }
 
 int API_connectSocket(void *sock, const char *host, int port)
 {
-	PyObject *res;
-	PyObject *addrTuple;
-	PyObject *connectStr;
+  PyObject *res;
+  PyObject *addrTuple;
+  PyObject *connectStr;
 
-	PRINTMARK();
+  PRINTMARK();
 
-	addrTuple = PyTuple_New(2);
-	PyTuple_SET_ITEM(addrTuple, 0, PyString_FromString(host));
-	PyTuple_SET_ITEM(addrTuple, 1, PyInt_FromLong(port));
+  addrTuple = PyTuple_New(2);
+  PyTuple_SET_ITEM(addrTuple, 0, PyString_FromString(host));
+  PyTuple_SET_ITEM(addrTuple, 1, PyInt_FromLong(port));
 
-	connectStr = PyString_FromString("connect");
-  
-	res = PyObject_CallMethodObjArgs( (PyObject *) sock, connectStr, addrTuple, NULL);
-    
-	Py_DECREF(connectStr);
-	Py_DECREF(addrTuple);
+  connectStr = PyString_FromString("connect");
 
-	if (res == NULL)
-	{
-		if (!PyErr_Occurred())
-		{
-			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception when connecting");
-			return 0;
-		}
+  res = PyObject_CallMethodObjArgs( (PyObject *) sock, connectStr, addrTuple, NULL);
 
-		return 0;
-	}
+  Py_DECREF(connectStr);
+  Py_DECREF(addrTuple);
 
-	PRINTMARK();
+  if (res == NULL)
+  {
+    if (!PyErr_Occurred())
+    {
+      PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception when connecting");
+      return 0;
+    }
 
-	Py_DECREF(res);
-	return 1;
+    return 0;
+  }
+
+  PRINTMARK();
+
+  Py_DECREF(res);
+  return 1;
 }
 
 int API_wouldBlock(void *sock, int fd, int ops, int timeout)
 {
-	/* Setup gevent and yield to gevent hub */
+  /* Setup gevent and yield to gevent hub */
 
-	static int once = 1;
-	static PyObject *sockmodule = NULL;
-	static PyObject *waitread = NULL;
-	static PyObject *waitwrite = NULL;
+  static int once = 1;
+  static PyObject *sockmodule = NULL;
+  static PyObject *waitread = NULL;
+  static PyObject *waitwrite = NULL;
 
-	PyObject *evtObject;
-	PyObject *argList;
-	PyObject *kwargList;
+  PyObject *evtObject;
+  PyObject *argList;
+  PyObject *kwargList;
 
-	if (once)
-	{
-		/*FIXME: References for module, class or methods are never released */
-		sockmodule = PyImport_ImportModule ("gevent.socket");
+  if (once)
+  {
+    /*FIXME: References for module, class or methods are never released */
+    sockmodule = PyImport_ImportModule ("gevent.socket");
 
-		if (sockmodule == NULL)
-		{
-			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> Could not import gevent.socket");
-			return -1;
-		}
+    if (sockmodule == NULL)
+    {
+      PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> Could not import gevent.socket");
+      return -1;
+    }
 
-		waitread = PyObject_GetAttrString(sockmodule, "wait_read");
-		waitwrite = PyObject_GetAttrString(sockmodule, "wait_write");
+    waitread = PyObject_GetAttrString(sockmodule, "wait_read");
+    waitwrite = PyObject_GetAttrString(sockmodule, "wait_write");
 
-		if (waitread == NULL || waitwrite == NULL)
-		{
-			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> Could not import wait_read or wait_write");
-			return -1;
-		}
+    if (waitread == NULL || waitwrite == NULL)
+    {
+      PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> Could not import wait_read or wait_write");
+      return -1;
+    }
 
-		if (!PyFunction_Check(waitread) || !PyFunction_Check(waitwrite))
-		{
-			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> wait_read or wait_write are not callable");
-			return -1;
-		}
-		
-		PRINTMARK();
-		once = 0;
-	}
+    if (!PyFunction_Check(waitread) || !PyFunction_Check(waitwrite))
+    {
+      PyErr_Format(PyExc_RuntimeError, "UNEXPECTED:> wait_read or wait_write are not callable");
+      return -1;
+    }
 
-
-	PRINTMARK();
-	//FIXME: do this once
-	argList = PyTuple_New(1);
-	PyTuple_SET_ITEM(argList, 0, PyInt_FromLong(fd));
-	kwargList = PyDict_New();
-
-	PyDict_SetItemString(kwargList, "timeout", PyInt_FromLong(timeout));
-
-	PRINTMARK();
-
-	switch (ops)
-	{
-		case AMC_READ:
-			PRINTMARK();
-			evtObject = PyObject_Call (waitread, argList, kwargList); 
-			PRINTMARK();
-			break;
-
-		case AMC_WRITE:
-			PRINTMARK();
-			evtObject = PyObject_Call (waitwrite, argList, kwargList); 
-			PRINTMARK();
-			break;
-	}
-
-	Py_DECREF(argList);
-	Py_DECREF(kwargList);
-
-	if (evtObject == NULL)
-	{
-		if (!PyErr_Occurred())
-		{
-			PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception from gevent operation %d", ops);
-			return 0;
-		}
+    PRINTMARK();
+    once = 0;
+  }
 
 
-		PRINTMARK();
-		return 0;
-	}
+  PRINTMARK();
+  //FIXME: do this once
+  argList = PyTuple_New(1);
+  PyTuple_SET_ITEM(argList, 0, PyInt_FromLong(fd));
+  kwargList = PyDict_New();
 
-	PRINTMARK();
-	Py_DECREF(evtObject);
-	PRINTMARK();
+  PyDict_SetItemString(kwargList, "timeout", PyInt_FromLong(timeout));
 
-	if (PyErr_Occurred())
-	{
-		PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Exception is set without error happening");
-		return 0;
-	}
+  PRINTMARK();
 
-	return 1;
+  switch (ops)
+  {
+  case UMC_READ:
+    PRINTMARK();
+    evtObject = PyObject_Call (waitread, argList, kwargList); 
+    PRINTMARK();
+    break;
+
+  case UMC_WRITE:
+    PRINTMARK();
+    evtObject = PyObject_Call (waitwrite, argList, kwargList); 
+    PRINTMARK();
+    break;
+  }
+
+  Py_DECREF(argList);
+  Py_DECREF(kwargList);
+
+  if (evtObject == NULL)
+  {
+    if (!PyErr_Occurred())
+    {
+      PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Error is set without any exception from gevent operation %d", ops);
+      return 0;
+    }
+
+
+    PRINTMARK();
+    return 0;
+  }
+
+  PRINTMARK();
+  Py_DECREF(evtObject);
+  PRINTMARK();
+
+  if (PyErr_Occurred())
+  {
+    PyErr_Format(PyExc_RuntimeError, "UNEXPECTED>: Exception is set without error happening");
+    return 0;
+  }
+
+  return 1;
 }
 

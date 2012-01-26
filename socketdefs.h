@@ -5,16 +5,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
 3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-   This product includes software developed by ESN Social Software AB (www.esn.me).
+must display the following acknowledgement:
+This product includes software developed by ESN Social Software AB (www.esn.me).
 4. Neither the name of the ESN Social Software AB nor the
-   names of its contributors may be used to endorse or promote products
-   derived from this software without specific prior written permission.
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,16 +34,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
+* Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
+* Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-    * Neither the name of Hyves (Startphone Ltd.) nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
+* Neither the name of Hyves (Startphone Ltd.) nor the names of its
+contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -74,8 +74,8 @@ typedef int socklen_t;
 
 #define SocketSetNonBlock(_fd, _state) \
 { \
-	unsigned long flags = (_state) ? 1 : 0; \
-	ioctlsocket((_fd), FIONBIO, &flags); \
+  unsigned long flags = (_state) ? 1 : 0; \
+  ioctlsocket((_fd), FIONBIO, &flags); \
 } \
 
 #else
@@ -100,10 +100,10 @@ typedef int SOCKET;
 #define SocketEINPROGRESS(_fd) (errno == EINPROGRESS)
 #define SocketSetNonBlock(_fd, _state) \
 { \
-	if ((_state) \
-		fcntl ((_fd), F_SETFL, O_NONBLOCK); \
-	else \
-		fcntl ((_fd), F_SETFL, 0); \
+  if ((_state) \
+  fcntl ((_fd), F_SETFL, O_NONBLOCK); \
+  else \
+  fcntl ((_fd), F_SETFL, 0); \
 } \
 
 #define SocketGetLastError() (errno)

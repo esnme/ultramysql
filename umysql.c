@@ -1477,33 +1477,9 @@ static PyTypeObject ResultSetType = {
   (initproc)ResultSet_init,		/* tp_init           */
 };
 
-
-
-
-
-
-
-
-
 static PyMethodDef methods[] = {
   {NULL, NULL, 0, NULL}        /* Sentinel */
 };
-
-
-
-/*
-StandardError
-|__Warning
-|__Error
-|__InterfaceError
-|__DatabaseError
-|__DataError
-|__OperationalError
-|__IntegrityError
-|__InternalError
-|__ProgrammingError
-|__NotSupportedError
-*/
 
 PyMODINIT_FUNC
   initumysql(void) 

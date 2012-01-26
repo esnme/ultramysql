@@ -5,16 +5,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
 3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-   This product includes software developed by ESN Social Software AB (www.esn.me).
+must display the following acknowledgement:
+This product includes software developed by ESN Social Software AB (www.esn.me).
 4. Neither the name of the ESN Social Software AB nor the
-   names of its contributors may be used to endorse or promote products
-   derived from this software without specific prior written permission.
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,16 +34,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
+* Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
+* Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-    * Neither the name of Hyves (Startphone Ltd.) nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
+* Neither the name of Hyves (Startphone Ltd.) nor the names of its
+contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -67,165 +67,165 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 PacketWriter::PacketWriter(size_t _cbSize)
 {
-	m_buffStart = new char[_cbSize];
-	m_buffEnd = m_buffStart + _cbSize;
-	m_readCursor = m_buffStart;
-	m_writeCursor = m_buffStart;
+  m_buffStart = new char[_cbSize];
+  m_buffEnd = m_buffStart + _cbSize;
+  m_readCursor = m_buffStart;
+  m_writeCursor = m_buffStart;
 }
 
 PacketWriter::~PacketWriter(void)
 {
-	delete m_buffStart;
+  delete m_buffStart;
 }
 
 // Push/increment write cursor
 void PacketWriter::push(void *data, size_t cbData)
 {
-	assert (m_writeCursor + cbData  < m_buffEnd);
+  assert (m_writeCursor + cbData  < m_buffEnd);
 
-	memcpy (m_writeCursor, data, cbData);
-	m_writeCursor += cbData;
+  memcpy (m_writeCursor, data, cbData);
+  m_writeCursor += cbData;
 }
 
 // Pull/Increment read cursor
 void PacketWriter::pull(size_t cbSize)
 {
-	assert (m_writeCursor - m_readCursor <= cbSize);
-	m_readCursor += cbSize;
+  assert (m_writeCursor - m_readCursor <= cbSize);
+  m_readCursor += cbSize;
 }
 
 char *PacketWriter::getStart()
 {
-	return m_buffStart;
+  return m_buffStart;
 }
 
 char *PacketWriter::getEnd()
 {
-	return m_buffEnd;
+  return m_buffEnd;
 }
 
 char *PacketWriter::getReadCursor()
 {
-	return m_readCursor;
+  return m_readCursor;
 }
 
 char *PacketWriter::getWriteCursor()
 {
-	return m_writeCursor;
+  return m_writeCursor;
 }
 
 bool PacketWriter::isDone()
 {
-	return (m_readCursor == m_writeCursor);
+  return (m_readCursor == m_writeCursor);
 }
 
 void PacketWriter::reset()
 {
-	m_readCursor = m_buffStart;
-	m_writeCursor = m_buffStart;
+  m_readCursor = m_buffStart;
+  m_writeCursor = m_buffStart;
 
-	// Reserve space for header
-	writeLong(0);
+  // Reserve space for header
+  writeLong(0);
 }
 
 void PacketWriter::writeLong (UINT32 value)
 {
-	*((UINT32*)m_writeCursor) = BYTEORDER_UINT32(value);
-	m_writeCursor += 4;
+  *((UINT32*)m_writeCursor) = BYTEORDER_UINT32(value);
+  m_writeCursor += 4;
 }
 
 void PacketWriter::writeByte (UINT8 value)
 {
-	*((UINT8*)m_writeCursor) = value;
-	m_writeCursor ++;
+  *((UINT8*)m_writeCursor) = value;
+  m_writeCursor ++;
 }
 
 void PacketWriter::writeNTString (const char *_str)
 {
-	while (*_str != '\0')
-	{
-		*(m_writeCursor++) = *(_str++);
-	}
-	*(m_writeCursor++) = '\0';
+  while (*_str != '\0')
+  {
+    *(m_writeCursor++) = *(_str++);
+  }
+  *(m_writeCursor++) = '\0';
 }
 
 void PacketWriter::writeBytes (void *data, size_t cbData)
 {
-	memcpy (m_writeCursor, data, cbData);
-	m_writeCursor += cbData;
+  memcpy (m_writeCursor, data, cbData);
+  m_writeCursor += cbData;
 }
 
 void PrintBuffer(FILE *file, void *_offset, size_t len, int perRow)
 {
-	size_t cnt = 0;
+  size_t cnt = 0;
 
-	char *offset = (char *) _offset;
-	char *end = offset + len;
-	
-	int orgPerRow = perRow;
+  char *offset = (char *) _offset;
+  char *end = offset + len;
 
-	fprintf (file, "%u %p --------------\n", len, _offset);
+  int orgPerRow = perRow;
 
-	while (offset != end)
-	{
-		fprintf (file, "%08x: ", cnt);
+  fprintf (file, "%u %p --------------\n", len, _offset);
 
-		if (end - offset < perRow)
-		{
-			perRow = end - offset;
-		}
+  while (offset != end)
+  {
+    fprintf (file, "%08x: ", cnt);
 
-		for (int index = 0; index < perRow; index ++)
-		{
-			int chr = (unsigned char) *offset;
+    if (end - offset < perRow)
+    {
+      perRow = end - offset;
+    }
 
-			if (isprint(chr))
-			{
-				fprintf (file, "%c", chr);
-			}
-			else
-			{
-				fprintf (file, ".");
-			}
+    for (int index = 0; index < perRow; index ++)
+    {
+      int chr = (unsigned char) *offset;
 
-			offset ++;
-		}
+      if (isprint(chr))
+      {
+        fprintf (file, "%c", chr);
+      }
+      else
+      {
+        fprintf (file, ".");
+      }
 
-		offset -= perRow;
+      offset ++;
+    }
 
-		for (int index = perRow; index < orgPerRow; index ++)
-		{
-			fprintf (file, " ");
-		}
+    offset -= perRow;
 
-		fprintf (file, "    ");
+    for (int index = perRow; index < orgPerRow; index ++)
+    {
+      fprintf (file, " ");
+    }
 
-		for (int index = 0; index < perRow; index ++)
-		{
-			int chr = (unsigned char) *offset;
+    fprintf (file, "    ");
 
-			fprintf (file, "%02x ", chr);
-			offset ++;
-		}
+    for (int index = 0; index < perRow; index ++)
+    {
+      int chr = (unsigned char) *offset;
 
-		fprintf (file, "\n");
+      fprintf (file, "%02x ", chr);
+      offset ++;
+    }
 
-		cnt += perRow;
-	}
+    fprintf (file, "\n");
+
+    cnt += perRow;
+  }
 }
 
 void PacketWriter::finalize(int packetNumber)
 {
-	size_t packetLen = (m_writeCursor - m_readCursor - MYSQL_PACKET_HEADER_SIZE);
+  size_t packetLen = (m_writeCursor - m_readCursor - MYSQL_PACKET_HEADER_SIZE);
 
-	*((UINT32 *)m_buffStart) = packetLen;
-	*((UINT8 *)m_buffStart + 3) = packetNumber;
+  *((UINT32 *)m_buffStart) = packetLen;
+  *((UINT8 *)m_buffStart + 3) = packetNumber;
 
-	//PrintBuffer (stdout, m_readCursor, (m_writeCursor - m_readCursor), 16);
+  //PrintBuffer (stdout, m_readCursor, (m_writeCursor - m_readCursor), 16);
 
 }
 
 size_t PacketWriter::getSize(void)
 {
-	return (m_buffEnd - m_buffStart);
+  return (m_buffEnd - m_buffStart);
 }

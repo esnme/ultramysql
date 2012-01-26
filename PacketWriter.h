@@ -5,16 +5,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
 3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-   This product includes software developed by ESN Social Software AB (www.esn.me).
+must display the following acknowledgement:
+This product includes software developed by ESN Social Software AB (www.esn.me).
 4. Neither the name of the ESN Social Software AB nor the
-   names of its contributors may be used to endorse or promote products
-   derived from this software without specific prior written permission.
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,16 +34,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
+* Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
+* Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-    * Neither the name of Hyves (Startphone Ltd.) nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
+* Neither the name of Hyves (Startphone Ltd.) nor the names of its
+contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -66,36 +66,36 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class PacketWriter
 {
 public:
-	PacketWriter(size_t _cbSize);
-	~PacketWriter(void);
+  PacketWriter(size_t _cbSize);
+  ~PacketWriter(void);
 
-	// Push/increment write cursor
-	void push(void *data, size_t cbData);
+  // Push/increment write cursor
+  void push(void *data, size_t cbData);
 
-	// Pull/Increment read cursor
-	void pull(size_t cbSize);
+  // Pull/Increment read cursor
+  void pull(size_t cbSize);
 
-	char *getStart();
-	char *getEnd();
-	char *getReadCursor();
-	char *getWriteCursor();
-	bool isDone();
-	void reset();
+  char *getStart();
+  char *getEnd();
+  char *getReadCursor();
+  char *getWriteCursor();
+  bool isDone();
+  void reset();
 
-	void writeLong (UINT32 value);
-	void writeByte (UINT8 value);
-	void writeNTString (const char *_str);
-	void writeBytes (void *data, size_t cbData);
-	void finalize(int packetNumber);
+  void writeLong (UINT32 value);
+  void writeByte (UINT8 value);
+  void writeNTString (const char *_str);
+  void writeBytes (void *data, size_t cbData);
+  void finalize(int packetNumber);
 
-	size_t getSize(void);
+  size_t getSize(void);
 
 
 private:
-	char *m_buffStart;
-	char *m_buffEnd;
-	char *m_readCursor;
-	char *m_writeCursor;
+  char *m_buffStart;
+  char *m_buffEnd;
+  char *m_readCursor;
+  char *m_writeCursor;
 
 
 };

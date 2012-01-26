@@ -5,16 +5,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
 3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-   This product includes software developed by ESN Social Software AB (www.esn.me).
+must display the following acknowledgement:
+This product includes software developed by ESN Social Software AB (www.esn.me).
 4. Neither the name of the ESN Social Software AB nor the
-   names of its contributors may be used to endorse or promote products
-   derived from this software without specific prior written permission.
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,16 +34,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
+* Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
+* Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-    * Neither the name of Hyves (Startphone Ltd.) nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
+* Neither the name of Hyves (Startphone Ltd.) nor the names of its
+contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -67,54 +67,54 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 PacketReader::PacketReader (size_t _cbSize)
 {
-	m_buffStart = new char[_cbSize];
-	m_writeCursor = m_buffStart;
-	m_buffEnd = m_buffStart + _cbSize;
-	m_readCursor = m_buffStart;
-	m_packetEnd = NULL;
+  m_buffStart = new char[_cbSize];
+  m_writeCursor = m_buffStart;
+  m_buffEnd = m_buffStart + _cbSize;
+  m_readCursor = m_buffStart;
+  m_packetEnd = NULL;
 }
 
 PacketReader::~PacketReader (void)
 {
-	delete m_buffStart;
+  delete m_buffStart;
 }
 
 void PacketReader::skip()
 {
-	assert (m_packetEnd != NULL);
-	assert (m_readCursor <= m_packetEnd);
+  assert (m_packetEnd != NULL);
+  assert (m_readCursor <= m_packetEnd);
 
-	m_readCursor = m_packetEnd;
+  m_readCursor = m_packetEnd;
 
-	if (m_readCursor == m_writeCursor)
-	{
-		//fprintf (stderr, "%s: Buffer is aligned, moving back\n", __FUNCTION__);
+  if (m_readCursor == m_writeCursor)
+  {
+    //fprintf (stderr, "%s: Buffer is aligned, moving back\n", __FUNCTION__);
 
-		m_readCursor = m_buffStart;
-		m_writeCursor = m_buffStart;
-		m_packetEnd = NULL;
-	}
+    m_readCursor = m_buffStart;
+    m_writeCursor = m_buffStart;
+    m_packetEnd = NULL;
+  }
 }
 
 void PacketReader::push(size_t _cbData)
 {
-	//fprintf (stderr, "%s: Pushing %u bytes\n", __FUNCTION__, _cbData);
-	m_writeCursor += _cbData;
+  //fprintf (stderr, "%s: Pushing %u bytes\n", __FUNCTION__, _cbData);
+  m_writeCursor += _cbData;
 }
 
 char *PacketReader::getWritePtr()
 {
-	return m_writeCursor;
+  return m_writeCursor;
 }
 
 char *PacketReader::getStartPtr()
 {
-	return m_buffStart;
+  return m_buffStart;
 }
 
 char *PacketReader::getEndPtr()
 {
-	return m_buffEnd;
+  return m_buffEnd;
 }
 
 extern void PrintBuffer(FILE *file, void *_offset, size_t len, int perRow);
@@ -122,209 +122,209 @@ extern void PrintBuffer(FILE *file, void *_offset, size_t len, int perRow);
 
 bool PacketReader::havePacket()
 {
-	m_packetEnd = NULL;
+  m_packetEnd = NULL;
 
-	size_t len = (m_writeCursor - m_readCursor);
+  size_t len = (m_writeCursor - m_readCursor);
 
-	if (len < MYSQL_PACKET_HEADER_SIZE)
-	{
-		return false;
-	}
+  if (len < MYSQL_PACKET_HEADER_SIZE)
+  {
+    return false;
+  }
 
-	UINT32 packetSize = readINT24();
-	UINT32 packetNumber = readByte();
+  UINT32 packetSize = readINT24();
+  UINT32 packetNumber = readByte();
 
-	if (len < MYSQL_PACKET_HEADER_SIZE + packetSize)
-	{
-		m_readCursor -= 4;
-		//fprintf (stderr, "%s: Not enough bytes in buffer, have %u, want %u\n", __FUNCTION__, len, MYSQL_PACKET_HEADER_SIZE + packetSize);
-		return false;
-	}
+  if (len < MYSQL_PACKET_HEADER_SIZE + packetSize)
+  {
+    m_readCursor -= 4;
+    //fprintf (stderr, "%s: Not enough bytes in buffer, have %u, want %u\n", __FUNCTION__, len, MYSQL_PACKET_HEADER_SIZE + packetSize);
+    return false;
+  }
 
-	this->m_packetEnd = m_readCursor + packetSize;
+  this->m_packetEnd = m_readCursor + packetSize;
 
-	//fprintf (stderr, "%s: Have a packet %02x\n", __FUNCTION__, (*m_readCursor));
-	//PrintBuffer (stderr, m_readCursor, (m_packetEnd - m_readCursor), 16);
+  //fprintf (stderr, "%s: Have a packet %02x\n", __FUNCTION__, (*m_readCursor));
+  //PrintBuffer (stderr, m_readCursor, (m_packetEnd - m_readCursor), 16);
 
-	return true;
+  return true;
 }
 
 UINT8 PacketReader::readByte()
 {
-	assert (m_readCursor + 1 <= m_packetEnd || m_packetEnd == NULL);
-	assert (m_packetEnd <= m_writeCursor);
+  assert (m_readCursor + 1 <= m_packetEnd || m_packetEnd == NULL);
+  assert (m_packetEnd <= m_writeCursor);
 
-	return (*m_readCursor++);
+  return (*m_readCursor++);
 }
 
 UINT16 PacketReader::readShort()
 {
-	assert (m_readCursor + 2 <= m_packetEnd);
-	assert (m_packetEnd <= m_writeCursor);
+  assert (m_readCursor + 2 <= m_packetEnd);
+  assert (m_packetEnd <= m_writeCursor);
 
-	UINT16 ret = BYTEORDER_UINT16(*((UINT16*)m_readCursor));
-	m_readCursor += 2;
-	return ret;
+  UINT16 ret = BYTEORDER_UINT16(*((UINT16*)m_readCursor));
+  m_readCursor += 2;
+  return ret;
 }
 
 UINT32 PacketReader::readINT24()
 {
-	assert (m_readCursor < m_packetEnd || m_packetEnd == NULL);
-	assert (m_packetEnd < m_writeCursor);
+  assert (m_readCursor < m_packetEnd || m_packetEnd == NULL);
+  assert (m_packetEnd < m_writeCursor);
 
-	UINT32 ret = readByte() | (readByte() << 8) | (readByte() << 16);
+  UINT32 ret = readByte() | (readByte() << 8) | (readByte() << 16);
 
-	return ret;
+  return ret;
 }
 
 UINT32 PacketReader::readLong()
 {
-	assert (m_readCursor + 4 <= m_packetEnd);
-	assert (m_packetEnd <= m_writeCursor);
+  assert (m_readCursor + 4 <= m_packetEnd);
+  assert (m_packetEnd <= m_writeCursor);
 
-	UINT32 ret = BYTEORDER_UINT32(*((UINT32*)m_readCursor));
-	m_readCursor += 4;
-	return ret;
+  UINT32 ret = BYTEORDER_UINT32(*((UINT32*)m_readCursor));
+  m_readCursor += 4;
+  return ret;
 }
 
 char *PacketReader::readNTString()
 {
-	assert (m_readCursor < m_packetEnd);
-	assert (m_packetEnd <= m_writeCursor);
+  assert (m_readCursor < m_packetEnd);
+  assert (m_packetEnd <= m_writeCursor);
 
-	char *ret = m_readCursor;
+  char *ret = m_readCursor;
 
-	while (m_readCursor < m_packetEnd)
-	{
-		if (*(m_readCursor++) == '\0')
-		{
-			return ret;
-		}
-	}
+  while (m_readCursor < m_packetEnd)
+  {
+    if (*(m_readCursor++) == '\0')
+    {
+      return ret;
+    }
+  }
 
-	assert (false);
-	return NULL;
+  assert (false);
+  return NULL;
 }
 
 
 UINT8 *PacketReader::readBytes(size_t cbsize)
 {
-	assert (m_readCursor + cbsize <= m_packetEnd);
-	assert (m_packetEnd <= m_writeCursor);
+  assert (m_readCursor + cbsize <= m_packetEnd);
+  assert (m_packetEnd <= m_writeCursor);
 
-	UINT8 *ret = (UINT8 *) m_readCursor;
-	m_readCursor += cbsize;
+  UINT8 *ret = (UINT8 *) m_readCursor;
+  m_readCursor += cbsize;
 
-	return ret;
+  return ret;
 }
 
 size_t PacketReader::getBytesLeft()
 {
-	return (m_packetEnd - m_readCursor);
+  return (m_packetEnd - m_readCursor);
 }
 
 void PacketReader::rewind(size_t num)
 {
-	m_readCursor -= num;
+  m_readCursor -= num;
 }
 
 
 UINT8 *PacketReader::readLengthCodedBinary(size_t *_outLen)
 {
-	assert (m_readCursor < m_packetEnd);
-	assert (m_packetEnd <= m_writeCursor);
+  assert (m_readCursor < m_packetEnd);
+  assert (m_packetEnd <= m_writeCursor);
 
-	switch (*((UINT8 *) m_readCursor))
-	{
-	default:
-		*_outLen = (size_t) *((UINT8 *) m_readCursor);
-		m_readCursor ++;
-		break;
+  switch (*((UINT8 *) m_readCursor))
+  {
+  default:
+    *_outLen = (size_t) *((UINT8 *) m_readCursor);
+    m_readCursor ++;
+    break;
 
-	case 251:
-		m_readCursor ++;
-		*_outLen = 0;
-		return NULL;
+  case 251:
+    m_readCursor ++;
+    *_outLen = 0;
+    return NULL;
 
-	case 252:
-		m_readCursor ++;
-		*_outLen = (size_t) *((UINT16 *) m_readCursor);
-		m_readCursor += 2; 
-		break;
+  case 252:
+    m_readCursor ++;
+    *_outLen = (size_t) *((UINT16 *) m_readCursor);
+    m_readCursor += 2; 
+    break;
 
-	case 253:
-		m_readCursor ++;
-		*_outLen = (size_t) *((UINT32 *) m_readCursor);
-		*_outLen &= 0xffffff;
-		m_readCursor += 3; 
-		break;
+  case 253:
+    m_readCursor ++;
+    *_outLen = (size_t) *((UINT32 *) m_readCursor);
+    *_outLen &= 0xffffff;
+    m_readCursor += 3; 
+    break;
 
-	case 254:
-		m_readCursor ++;
-		*_outLen = (size_t) *((UINT64 *) m_readCursor);
-		m_readCursor += 8; 
-		break;
-	}
+  case 254:
+    m_readCursor ++;
+    *_outLen = (size_t) *((UINT64 *) m_readCursor);
+    m_readCursor += 8; 
+    break;
+  }
 
-	UINT8 *ret = (UINT8*) m_readCursor;
-	m_readCursor += (*_outLen);
+  UINT8 *ret = (UINT8*) m_readCursor;
+  m_readCursor += (*_outLen);
 
-	assert (m_readCursor <= m_packetEnd);
+  assert (m_readCursor <= m_packetEnd);
 
-	return ret;
+  return ret;
 }
 
 size_t PacketReader::getSize()
 {
-	return m_buffEnd - m_buffStart;
+  return m_buffEnd - m_buffStart;
 }
 
 
 UINT64 PacketReader::readLengthCodedInteger()
 {
-	assert (m_readCursor < m_packetEnd);
-	assert (m_packetEnd <= m_writeCursor);
+  assert (m_readCursor < m_packetEnd);
+  assert (m_packetEnd <= m_writeCursor);
 
-	UINT64 ret;
+  UINT64 ret;
 
-	switch (*((UINT8 *) m_readCursor))
-	{
-	default:
-		ret = (UINT64) *((UINT8 *) m_readCursor);
-		m_readCursor ++;
-		assert (m_readCursor <= m_packetEnd);
-		return ret;
+  switch (*((UINT8 *) m_readCursor))
+  {
+  default:
+    ret = (UINT64) *((UINT8 *) m_readCursor);
+    m_readCursor ++;
+    assert (m_readCursor <= m_packetEnd);
+    return ret;
 
-	case 251:
-		ret = 0;
-		m_readCursor ++;
-		assert (m_readCursor <= m_packetEnd);
-		return ret;
+  case 251:
+    ret = 0;
+    m_readCursor ++;
+    assert (m_readCursor <= m_packetEnd);
+    return ret;
 
-	case 252:
-		m_readCursor ++;
-		ret = (UINT64) *((UINT16 *) m_readCursor);
-		m_readCursor += 2;
-		assert (m_readCursor <= m_packetEnd);
-		return ret;
+  case 252:
+    m_readCursor ++;
+    ret = (UINT64) *((UINT16 *) m_readCursor);
+    m_readCursor += 2;
+    assert (m_readCursor <= m_packetEnd);
+    return ret;
 
-	case 253:
-		m_readCursor ++;
-		ret = (UINT64) *((UINT32 *) m_readCursor);
-		ret &= 0xffffff;
-		m_readCursor += 3;
-		assert (m_readCursor <= m_packetEnd);
-		return ret;
+  case 253:
+    m_readCursor ++;
+    ret = (UINT64) *((UINT32 *) m_readCursor);
+    ret &= 0xffffff;
+    m_readCursor += 3;
+    assert (m_readCursor <= m_packetEnd);
+    return ret;
 
-	case 254:
-		m_readCursor ++;
-		ret = (UINT64) *((UINT64 *) m_readCursor);
-		m_readCursor += 8;
-		assert (m_readCursor <= m_packetEnd);
-		return ret;
-	}
+  case 254:
+    m_readCursor ++;
+    ret = (UINT64) *((UINT64 *) m_readCursor);
+    m_readCursor += 8;
+    assert (m_readCursor <= m_packetEnd);
+    return ret;
+  }
 
-	return ret;
+  return ret;
 }
 
 

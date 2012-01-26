@@ -5,16 +5,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
 3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-   This product includes software developed by ESN Social Software AB (www.esn.me).
+must display the following acknowledgement:
+This product includes software developed by ESN Social Software AB (www.esn.me).
 4. Neither the name of the ESN Social Software AB nor the
-   names of its contributors may be used to endorse or promote products
-   derived from this software without specific prior written permission.
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,16 +34,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
+* Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
+* Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-    * Neither the name of Hyves (Startphone Ltd.) nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
+* Neither the name of Hyves (Startphone Ltd.) nor the names of its
+contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -66,41 +66,41 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum UMConnection_Ops
 {
-	UMC_READ,
-	UMC_WRITE,
+  UMC_READ,
+  UMC_WRITE,
 };
 
 enum UMErrorType
 {
-	UME_OTHER,
-	UME_MYSQL,
+  UME_OTHER,
+  UME_MYSQL,
 };
 
 typedef struct 
 {
-	UINT8 type;
-	UINT16 flags;
-	UINT16 charset;
+  UINT8 type;
+  UINT16 flags;
+  UINT16 charset;
 } UMTypeInfo;
 
 typedef struct __UMConnectionCAPI
 {
-	void *(*createSocket)(int family, int type, int proto);
-	int (*getSocketFD)(void *instance);
-	void (*deleteSocket)(void *instance);
-	void (*closeSocket)(void *instance);
-	int (*wouldBlock)(void *instance, int fd, int ops, int timeout);
-	int (*connectSocket)(void *sock, const char *host, int port);
-	int (*setTimeout)(void *sock, int timeout);
-	void (*clearException)(void);
+  void *(*createSocket)(int family, int type, int proto);
+  int (*getSocketFD)(void *instance);
+  void (*deleteSocket)(void *instance);
+  void (*closeSocket)(void *instance);
+  int (*wouldBlock)(void *instance, int fd, int ops, int timeout);
+  int (*connectSocket)(void *sock, const char *host, int port);
+  int (*setTimeout)(void *sock, int timeout);
+  void (*clearException)(void);
 
-	void *(*createResult)(int columns);
-	void (*resultSetField)(void *result, int ifield, UMTypeInfo *ti, void *name, size_t cbName);
-	void (*resultRowBegin)(void *result);
-	int (*resultRowValue)(void *result, int icolumn, UMTypeInfo *ti, void *value, size_t cbValue);
-	void (*resultRowEnd)(void *result);
-	void (*destroyResult)(void *result);
-	void *(*resultOK)(UINT64 affected, UINT64 insertId, int serverStatus, const char *message, size_t len);
+  void *(*createResult)(int columns);
+  void (*resultSetField)(void *result, int ifield, UMTypeInfo *ti, void *name, size_t cbName);
+  void (*resultRowBegin)(void *result);
+  int (*resultRowValue)(void *result, int icolumn, UMTypeInfo *ti, void *value, size_t cbValue);
+  void (*resultRowEnd)(void *result);
+  void (*destroyResult)(void *result);
+  void *(*resultOK)(UINT64 affected, UINT64 insertId, int serverStatus, const char *message, size_t len);
 
 
 } UMConnectionCAPI;
