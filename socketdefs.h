@@ -102,7 +102,7 @@ typedef int SOCKET;
 { \
   if ((_state) \
   fcntl ((_fd), F_SETFL, O_NONBLOCK); \
-  else \
+else \
   fcntl ((_fd), F_SETFL, 0); \
 } \
 

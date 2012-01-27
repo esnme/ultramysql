@@ -78,8 +78,8 @@ if sys.platform == "win32":
 
 
 module1 = Extension('umysql',
-                sources = ['umysql.c', 'io_cpython.c', 'capi.cpp', 'Connection.cpp', 'PacketReader.cpp', 'PacketWriter.cpp', 'SHA1.cpp'],
-                include_dirs = ['./'],
+                sources = ['umysql.c', 'io_cpython.c', '../capi.cpp', '../Connection.cpp', '../PacketReader.cpp', '../PacketWriter.cpp', '../SHA1.cpp'],
+                include_dirs = ['./', '../'],
                 library_dirs = [],
                 libraries=libs,
                 define_macros=[('WIN32_LEAN_AND_MEAN', None)])

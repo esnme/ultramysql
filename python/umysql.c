@@ -1416,8 +1416,7 @@ PyMODINIT_FUNC
   PyObject *dict;
   PyDateTime_IMPORT;
 
-  m = Py_InitModule3("umysql", methods,
-    "");
+  m = Py_InitModule3("umysql", methods, "");
   if (m == NULL)
     return;
 

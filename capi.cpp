@@ -5,16 +5,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+notice, this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
 3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-   This product includes software developed by ESN Social Software AB (www.esn.me).
+must display the following acknowledgement:
+This product includes software developed by ESN Social Software AB (www.esn.me).
 4. Neither the name of the ESN Social Software AB nor the
-   names of its contributors may be used to endorse or promote products
-   derived from this software without specific prior written permission.
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,16 +34,16 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
+* Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
+* Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-    * Neither the name of Hyves (Startphone Ltd.) nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
+* Neither the name of Hyves (Startphone Ltd.) nor the names of its
+contributors may be used to endorse or promote products derived from this
+software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -59,58 +59,58 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 extern "C"
 {
-	#include "umysql.h"
+#include "umysql.h"
 }
 
 #include "Connection.h"
 
 EXPORT_ATTR UMConnection UMConnection_Create(UMConnectionCAPI *_capi)
 {
-	return (UMConnection) new Connection(_capi);
+  return (UMConnection) new Connection(_capi);
 }
 
 EXPORT_ATTR void UMConnection_Destroy(UMConnection conn)
 {
-	delete (Connection *)conn;
+  delete (Connection *)conn;
 }
 
 EXPORT_ATTR void * UMConnection_Query(UMConnection conn, const char *_query, size_t _cbQuery)
 {
-	return ((Connection *)conn)->query(_query, _cbQuery);
+  return ((Connection *)conn)->query(_query, _cbQuery);
 }
 
 EXPORT_ATTR int UMConnection_Connect (UMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, int _charset)
 {
-	return ((Connection *)conn)->connect(_host, _port, _username, _password, _database, _autoCommit, (MYSQL_CHARSETS) _charset) ? 1 : 0;
+  return ((Connection *)conn)->connect(_host, _port, _username, _password, _database, _autoCommit, (MYSQL_CHARSETS) _charset) ? 1 : 0;
 }
 
 EXPORT_ATTR int UMConnection_SetTimeout(UMConnection conn, int timeout)
 {
-	return ((Connection *)conn)->setTimeout(timeout) ? 1 : 0;
+  return ((Connection *)conn)->setTimeout(timeout) ? 1 : 0;
 }
 
 EXPORT_ATTR int UMConnection_GetLastError (UMConnection conn, const char **_ppOutMessage, int *_outErrno, int *_type)
 {
-	return ((Connection *)conn)->getLastError(_ppOutMessage, _outErrno, _type) ? 1 : 0;
+  return ((Connection *)conn)->getLastError(_ppOutMessage, _outErrno, _type) ? 1 : 0;
 }
 
 EXPORT_ATTR int UMConnection_GetTxBufferSize (UMConnection conn)
 {
-	return ((Connection *)conn)->getTxBufferSize();
+  return ((Connection *)conn)->getTxBufferSize();
 }
 
 EXPORT_ATTR int UMConnection_GetRxBufferSize (UMConnection conn)
 {
-	return ((Connection *)conn)->getRxBufferSize();
+  return ((Connection *)conn)->getRxBufferSize();
 }
 
 EXPORT_ATTR int UMConnection_IsConnected (UMConnection conn)
 {
-	return ((Connection *)conn)->isConnected() ? 1 : 0;
+  return ((Connection *)conn)->isConnected() ? 1 : 0;
 }
 
 EXPORT_ATTR int UMConnection_Close (UMConnection conn)
 {
-	return ((Connection *)conn)->close() ? 1 : 0;
+  return ((Connection *)conn)->close() ? 1 : 0;
 }
 
