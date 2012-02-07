@@ -61,6 +61,15 @@ from distutils.core import setup, Extension
 import shutil
 import sys
 
+CLASSIFIERS = filter(None, map(str.strip,
+"""
+Intended Audience :: Developers
+License :: OSI Approved :: BSD License
+Programming Language :: Python
+Topic :: Database
+Topic :: Software Development :: Libraries :: Python Modules
+""".splitlines()))
+
 """
 try:
 	shutil.rmtree("./build")
@@ -85,13 +94,15 @@ module1 = Extension('umysql',
                 define_macros=[('WIN32_LEAN_AND_MEAN', None)])
 					
 setup (name = 'umysql',
-		version = '2.1',
-		description = 'Ultra fast MySQL driver for Python',
-		ext_modules = [module1],
-		author = "Jonas Tarnstrom",
-		author_email = "jonas.tarnstrom@esn.me",
-		maintainer = "Jonas Tarnstrom",
-		maintainer_email = "jonas.tarnstrom@esn.me",
-		license = "BSD")
-
-       
+       version = "2.1",
+       description = "Ultra fast MySQL driver for Python",
+       ext_modules = [module1],
+       author="Jonas Tarnstrom",
+       author_email="jonas.tarnstrom@esn.me",
+       download_url="http://github.com/esnme/ultramysql",
+       license="BSD License",
+       packages=['umemcache'],
+       platforms=['any'],	   
+	   url="http://www.esn.me",
+       classifiers=CLASSIFIERS,
+	   )       
