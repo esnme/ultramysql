@@ -1,3 +1,0 @@
-include *.c
-include *.h
-include *.cpp
