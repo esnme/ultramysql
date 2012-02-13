@@ -286,6 +286,7 @@ bool Connection::processHandshake()
 
     m_clientCaps  &= ~MCP_COMPRESS;
     m_clientCaps  &= ~MCP_NO_SCHEMA;
+    m_clientCaps &= ~MCP_SSL;
 
     if (!(serverCaps & MCP_CONNECT_WITH_DB) && !m_database.empty())
     {

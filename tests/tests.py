@@ -64,9 +64,6 @@ import time
 import datetime
 import logging
 import unittest
-import gevent
-from gevent import monkey
-monkey.patch_socket()
 import socket
 
 import umysql
