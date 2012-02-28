@@ -857,7 +857,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 
   if (!UMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, charset))
   {
-    return NULL;
+    return HandleError(self, "connect");
   }
 
   Py_RETURN_NONE;
