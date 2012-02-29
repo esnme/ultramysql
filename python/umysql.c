@@ -621,8 +621,11 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_MEDIUM_BLOB:
     case MFTYPE_LONG_BLOB:
     case MFTYPE_BLOB:
-      // Fall through for string encoding
-      valobj = PyString_FromStringAndSize( (const char *) value, cbValue);
+      if (ti->flags & MFFLAG_BINARY_FLAG) {
+        valobj = PyString_FromStringAndSize( (const char *) value, cbValue);
+      } else {
+        valobj = DecodeString (ti, value, cbValue);
+      }
       break;
 
       //PyString family
