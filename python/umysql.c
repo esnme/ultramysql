@@ -1244,13 +1244,8 @@ PyObject *Connection_close(Connection *self, PyObject *notused)
 
 static void Connection_Destructor(Connection *self)
 {
-  PRINTMARK();
   UMConnection_Destroy(self->conn);
-  PRINTMARK();
   PyObject_Del(self);
-  PRINTMARK();
-  if (PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "Exception is set for no error in %s", __FUNCTION__);
-  PRINTMARK();
 }
 
 static PyMethodDef Connection_methods[] = {
