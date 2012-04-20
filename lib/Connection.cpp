@@ -294,7 +294,7 @@ bool Connection::processHandshake()
       return false;
     }
 
-    if (!(serverCaps & MCP_CONNECT_WITH_DB) && m_database.empty())
+    if ((serverCaps & MCP_CONNECT_WITH_DB) && m_database.empty())
     {
       m_clientCaps &= ~MCP_CONNECT_WITH_DB;
     }
