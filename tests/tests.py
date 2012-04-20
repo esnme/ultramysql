@@ -77,6 +77,15 @@ DB_DB = 'gevent_test'
 class TestMySQL(unittest.TestCase):
     log = logging.getLogger('TestMySQL')
 
+    def testConnectWithNoDB(self):
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "")
+
+    def testConnectWithWrongDB(self):
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "DBNOTFOUND")
+       
+    
     def testUnique(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
