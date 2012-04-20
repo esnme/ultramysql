@@ -77,14 +77,31 @@ DB_DB = 'gevent_test'
 class TestMySQL(unittest.TestCase):
     log = logging.getLogger('TestMySQL')
 
+    def testCorruption(self):
+        try:
+            a.b = umysql.Connection()
+        except NameError:
+            pass
+    
     def testConnectWithNoDB(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "")
 
     def testConnectWithWrongDB(self):
         cnn = umysql.Connection()
-        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "DBNOTFOUND")
-       
+
+        try:
+            cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "DBNOTFOUND")
+        except umysql.SQLError, e:
+            # 1044 = "Access denfied for user to database"
+            self.assertEquals(e[0], 1044)
+   
+    def testConnectWrongCredentials(self):
+        cnn = umysql.Connection()
+        try:
+            cnn.connect (DB_HOST, 3306, "UserNotFound", "PasswordYeah", DB_DB)
+        except umysql.SQLError, e:
+            self.assertEquals(e[0], 1045)
     
     def testUnique(self):
         cnn = umysql.Connection()
