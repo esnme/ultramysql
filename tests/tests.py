@@ -334,6 +334,33 @@ class TestMySQL(unittest.TestCase):
 
         cnn.close()
 
+    def testMySQLClientManyInserts(self):
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+
+        cnn.query("DROP TABLE IF EXISTS tbltestmanyinserts")
+        cnn.query("CREATE TABLE tbltestmanyinserts (i int, j int, f double)")
+
+        cnti = cntj = 0
+        print datetime.datetime.now(),'\tstarting test'
+        try:
+            for i in xrange(10000):
+                cnti += 1
+                cntj = 0
+                for j in xrange(10000):
+                    cntj += 1
+                    self.assertEquals((1, 0), cnn.query('''INSERT INTO tbltestmanyinserts
+                                                        VALUES (%d, %d, %s)''' %
+                                                        (i, j, 0.000012345)))
+                    #cnn.query("INSERT INTO tbltestmanyinserts VALUES (%d, %d, %s)" %
+                    #          (i, j, 0.000012345))
+                if not cnti % 10:
+                    print datetime.datetime.now(),'\t',str(cnti)
+            print datetime.datetime.now(),'\tfinished'
+        finally:
+            print datetime.datetime.now(),'\tcnti =',cnti,'\tcntj =',cntj
+            cnn.close()
+
     def testMySQLDBAPI(self):
 
         cnn = umysql.Connection()
