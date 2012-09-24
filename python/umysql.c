@@ -1081,11 +1081,17 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
       iptr ++;
 
-      if (*iptr != 's')
+      if (*iptr != 's' && *iptr != '%')
       {
         Py_DECREF(iterator);
         if (heap) PyObject_Free(obuffer);
         return PyErr_Format (PyExc_ValueError, "Found character %c expected %%", *iptr);
+      }
+
+      if (*iptr == '%')
+      {
+        *(optr++) = *(iptr)++;
+        break;
       }
 
       iptr ++;
