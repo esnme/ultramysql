@@ -715,7 +715,22 @@ class TestMySQL(unittest.TestCase):
             self.assertEquals(result, expected)
 
         cnn.close()
-     
+
+    def testPercentEscaping(self):
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+        rs = cnn.query("SELECT * FROM `tblautoincint` WHERE `test_id` LIKE '%%10%%'")
+        self.assertEquals([(100, u'piet'), (101, u'piet')], rs.rows)
+
+        rs = cnn.query("SELECT * FROM `tblautoincint` WHERE `test_id` LIKE '%%%s%%'", [10])
+        self.assertEquals([(100, u'piet'), (101, u'piet')], rs.rows)
+
+        # SqlAlchemy query style
+        rs = cnn.query("SELECT * FROM `tblautoincint` WHERE `test_id` LIKE concat(concat('%%', %s), '%%')", [10])
+        self.assertEquals([(100, u'piet'), (101, 'piet')], rs.rows)
+
+        cnn.close()
+
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
