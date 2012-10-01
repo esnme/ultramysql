@@ -569,6 +569,8 @@ void *Connection::handleOKPacket()
   size_t len = m_reader.getBytesLeft();
   UINT8 *message = m_reader.readBytes(m_reader.getBytesLeft());
 
+  m_reader.skip();
+
   return m_capi.resultOK(affectedRows, insertId, serverStatus, (char *) message, len);
 }
 

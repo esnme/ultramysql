@@ -344,7 +344,7 @@ class TestMySQL(unittest.TestCase):
         cnti = cntj = 0
         print datetime.datetime.now(),'\tstarting test'
         try:
-            for i in xrange(10000):
+            for i in xrange(200):
                 cnti += 1
                 cntj = 0
                 for j in xrange(10000):
