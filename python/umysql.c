@@ -858,7 +858,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
     self->PFN_PyUnicode_Encode = PyUnicode_EncodeUTF8;
   }
 
-  if (!UMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, charset))
+  if (!UMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, self->charset))
   {
     return HandleError(self, "connect");
   }
