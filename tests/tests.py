@@ -334,6 +334,7 @@ class TestMySQL(unittest.TestCase):
 
         cnn.close()
 
+    """
     def testMySQLClientManyInserts(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -360,6 +361,7 @@ class TestMySQL(unittest.TestCase):
         finally:
             print datetime.datetime.now(),'\tcnti =',cnti,'\tcntj =',cntj
             cnn.close()
+    """	    
 
     def testMySQLDBAPI(self):
 
