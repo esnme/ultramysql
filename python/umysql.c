@@ -809,7 +809,6 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 
   int autoCommit;
   char *pstrCharset = NULL;
-  int charset = MCS_UNDEFINED;
   PyObject *acObj = NULL;
 
   if (!PyArg_ParseTuple (args, "sisss|Os", &host, &port, &username, &password, &database, &acObj, &pstrCharset))
