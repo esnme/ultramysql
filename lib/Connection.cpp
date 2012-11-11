@@ -71,6 +71,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
 #define PRINTMARK() 		
 
+#ifdef DEBUG
+static void hexdump(void *ptr, int buflen) {
+  unsigned char *buf = (unsigned char*)ptr;
+  int i, j;
+  for (i=0; i<buflen; i+=16) {
+    printf("%06x: ", i);
+    for (j=0; j<16; j++) 
+      if (i+j < buflen)
+        printf("%02x ", buf[i+j]);
+      else
+        printf("   ");
+    printf(" ");
+    for (j=0; j<16; j++) 
+      if (i+j < buflen)
+        printf("%c", isprint(buf[i+j]) ? buf[i+j] : '.');
+    printf("\n");
+  }
+}
+#endif
+
 Connection::Connection (UMConnectionCAPI *_capi) 
   :	m_reader(MYSQL_RX_BUFFER_SIZE)
   , m_writer(MYSQL_TX_BUFFER_SIZE)
@@ -163,6 +183,11 @@ bool Connection::readSocket()
         return false;
       }
 
+#ifdef DEBUG
+    printf("recv %d\n", recvResult);
+    hexdump(m_reader.getWritePtr(), recvResult);
+#endif
+
       m_reader.push (recvResult);
 
       return true;
@@ -187,6 +212,11 @@ bool Connection::writeSocket()
       setError("Connection reset by peer when receiving", 0, UME_OTHER);
       return false;
     }
+
+#ifdef DEBUG
+    printf("send %d\n", sendResult);
+    hexdump(m_writer.getReadCursor(), sendResult);
+#endif
 
     m_writer.pull(sendResult);
     return true;
