@@ -760,6 +760,24 @@ class TestMySQL(unittest.TestCase):
 
         cnn.close()
 
+    def testProcedure(self):
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+        cnn.query("truncate tbltest")
+        self.assertEquals((1, 0), cnn.query('call CreateTest(%s, %s)', (1, 'test')))
+        rs = cnn.query('call QueryTest(%s, @count)', ('test', ))
+        self.assertEquals([(1, 'test', None)], rs.rows)
+        self.assertEquals((0, 0), cnn.query('select @count'))
+
+    def testMultiResult(self):
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+        self.assertEquals([(1,)], cnn.query("call TestMultiResult()").rows)
+        self.assertEquals([(2,)], cnn.nextset().rows)
+        self.assertEquals([(3,)], cnn.nextset().rows)
+        self.assertEquals((0,0), cnn.nextset())
+        self.assertEquals(None, cnn.nextset())
+
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
