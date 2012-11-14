@@ -1236,6 +1236,26 @@ PyObject *Connection_query(Connection *self, PyObject *args)
 
 
 
+PyObject *Connection_nextset(Connection *self, PyObject *notused)
+{
+  void *ret;
+
+  if (!UMConnection_HasMoreResult(self->conn))
+  {
+    Py_RETURN_NONE;
+  }
+
+  ret = UMConnection_NextResultSet(self->conn);
+  if (ret == NULL)
+  {
+      return HandleError(self, "nextset");
+  }
+
+  PRINTMARK();
+  return (PyObject *) ret;
+}
+
+
 
 PyObject *Connection_close(Connection *self, PyObject *notused)
 {
@@ -1256,6 +1276,7 @@ static void Connection_Destructor(Connection *self)
 static PyMethodDef Connection_methods[] = {
   {"connect", (PyCFunction)			Connection_connect,			METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
   {"query", (PyCFunction)				Connection_query,				METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
+  {"nextset", (PyCFunction)				Connection_nextset,				METH_NOARGS, "Try to fetch the next result set, if there no more sets, return None."},
   {"close", (PyCFunction)	Connection_close,	METH_NOARGS, "Closes connection"},
   {"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, "Check connection status"},
   {"settimeout", (PyCFunction) Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},

@@ -79,6 +79,16 @@ EXPORT_ATTR void * UMConnection_Query(UMConnection conn, const char *_query, siz
   return ((Connection *)conn)->query(_query, _cbQuery);
 }
 
+EXPORT_ATTR int UMConnection_HasMoreResult(UMConnection conn)
+{
+  return (int)((Connection *)conn)->hasMoreResult();
+}
+
+EXPORT_ATTR void * UMConnection_NextResultSet(UMConnection conn)
+{
+  return ((Connection *)conn)->nextResultSet();
+}
+
 EXPORT_ATTR int UMConnection_Connect (UMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, int _charset)
 {
   return ((Connection *)conn)->connect(_host, _port, _username, _password, _database, _autoCommit, (MYSQL_CHARSETS) _charset) ? 1 : 0;

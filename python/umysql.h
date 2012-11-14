@@ -119,6 +119,8 @@ typedef void * UMConnection;
 UMConnection UMConnection_Create(UMConnectionCAPI *_capi);
 void UMConnection_Destroy(UMConnection _conn);
 void *UMConnection_Query(UMConnection conn, const char *_query, size_t _cbQuery);
+int UMConnection_HasMoreResult(UMConnection conn);
+void *UMConnection_NextResultSet(UMConnection conn);
 int  UMConnection_Connect (UMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, int _charset);
 int UMConnection_GetLastError (UMConnection conn, const char **_ppOutMessage, int *_outErrno, int *_type);
 int UMConnection_GetTxBufferSize (UMConnection conn);

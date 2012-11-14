@@ -104,6 +104,7 @@ Connection::Connection (UMConnectionCAPI *_capi)
   memcpy (&m_capi, _capi, sizeof (UMConnectionCAPI));
   m_dbgMethodProgress = 0;
   m_errorType = UME_OTHER;
+  m_has_more_result = false;
 }
 
 Connection::~Connection()
@@ -708,6 +709,12 @@ void *Connection::handleResultPacket(int _fieldCount)
 
     if (result == 0xfe)
     {
+      // ignore warning count.
+      m_reader.readBytes(2); 
+
+      UINT16 server_status = m_reader.readShort();
+      m_has_more_result = server_status & SERVER_MORE_RESULTS_EXISTS;
+
       m_reader.skip();
       break;
     }
@@ -743,6 +750,7 @@ void *Connection::handleResultPacket(int _fieldCount)
 void *Connection::query(const char *_query, size_t _cbQuery)
 {
   m_dbgMethodProgress ++;
+  m_has_more_result = false;
 
   if (m_dbgMethodProgress > 1)
   {
@@ -784,6 +792,13 @@ void *Connection::query(const char *_query, size_t _cbQuery)
     m_dbgMethodProgress --;
     return NULL;
   }
+
+  return nextResultSet();
+}
+
+
+void *Connection::nextResultSet()
+{
 
   if (!recvPacket())
   {

@@ -29,6 +29,13 @@ BEGIN
   SELECT COUNT(*) INTO rowcount FROM tbltest WHERE test_string=str;
   SELECT * FROM tbltest WHERE test_string=str;
 END //
+
+CREATE PROCEDURE TestMultiResult()
+BEGIN
+    SELECT 1;
+    SELECT 2;
+    SELECT 3;
+END //
 DELIMITER ;
 
 GRANT ALL on gevent_test.* to 'gevent_test'@'localhost' identified by 'gevent_test';
