@@ -605,6 +605,7 @@ void *Connection::handleOKPacket()
 
   m_reader.skip();
 
+  m_has_more_result = serverStatus & SERVER_MORE_RESULTS_EXISTS;
   return m_capi.resultOK(affectedRows, insertId, serverStatus, (char *) message, len);
 }
 
@@ -712,8 +713,8 @@ void *Connection::handleResultPacket(int _fieldCount)
       // ignore warning count.
       m_reader.readBytes(2); 
 
-      UINT16 server_status = m_reader.readShort();
-      m_has_more_result = server_status & SERVER_MORE_RESULTS_EXISTS;
+      UINT16 serverStatus = m_reader.readShort();
+      m_has_more_result = serverStatus & SERVER_MORE_RESULTS_EXISTS;
 
       m_reader.skip();
       break;

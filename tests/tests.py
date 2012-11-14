@@ -776,6 +776,7 @@ class TestMySQL(unittest.TestCase):
         self.assertEquals([(2,)], cnn.nextset().rows)
         self.assertEquals([(3,)], cnn.nextset().rows)
         self.assertEquals((0,0), cnn.nextset())
+        self.assertEquals(None, cnn.nextset())
 
 if __name__ == '__main__':
     from guppy import hpy
