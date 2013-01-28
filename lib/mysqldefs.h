@@ -72,11 +72,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // POSIX stuff 
 //-----------------------------------------------------------------------------
 #include <sys/types.h>
+#include <stdint.h>
 
-typedef u_int8_t UINT8;
-typedef u_int16_t UINT16;
-typedef u_int32_t UINT32;
-typedef u_int64_t UINT64;
+typedef uint8_t UINT8;
+typedef uint16_t UINT16;
+typedef uint32_t UINT32;
+typedef uint64_t UINT64;
 
 typedef int8_t INT8;
 typedef int16_t INT16;
