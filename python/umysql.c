@@ -569,6 +569,7 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
         break;
       }
 
+    case MFTYPE_TIMESTAMP:
     case MFTYPE_DATETIME:
       {
         int year;
@@ -610,7 +611,6 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
 
       // We ignore these
 
-    case MFTYPE_TIMESTAMP:
     case MFTYPE_TIME:
     case MFTYPE_YEAR:
     case MFTYPE_NEWDATE:
