@@ -93,8 +93,8 @@ class TestMySQL(unittest.TestCase):
         try:
             cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "DBNOTFOUND")
         except umysql.SQLError, e:
-            # 1044 = "Access denfied for user to database"
-            self.assertEquals(e[0], 1044)
+            # 1049 = ER_BAD_DB_ERROR
+            self.assertEquals(e[0], 1049)
    
     def testConnectWrongCredentials(self):
         cnn = umysql.Connection()
@@ -759,6 +759,24 @@ class TestMySQL(unittest.TestCase):
         self.assertEquals([(100, u'piet'), (101, 'piet')], rs.rows)
 
         cnn.close()
+
+    def testTimestamp(self):
+        ts = datetime.datetime(2013, 4, 26, 9, 53, 48)
+        ts_val = ts.strftime("%Y-%m-%d %H:%M:%S")
+        drop = 'drop table if exists tbltimestamp'
+        create = 'create table tbltimestamp (idx int not null, ts timestamp)'
+        insert = 'insert into tbltimestamp (idx, ts) values (%s, %s)'
+        select = 'select idx, ts from tbltimestamp where idx = %s'
+        idx = 1
+
+        cnn = umysql.Connection()
+        cnn.connect(DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+        cnn.query(drop)
+        cnn.query(create)
+        cnn.query(insert, (idx, ts_val,))
+        result = cnn.query(select, (idx,))
+        self.assertEqual(result.rows[0], (idx, ts))
+
 
 if __name__ == '__main__':
     from guppy import hpy
