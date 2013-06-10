@@ -521,6 +521,12 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
     m_dbgMethodProgress --;
     return false;
   }
+  if (result == 0xfe)
+  {
+    setError ("You are using old password, please update it use PASSWORD(), other than OLD_PASSWORD().", 4, UME_OTHER);
+    m_dbgMethodProgress --;
+    return false;
+  }
 
   m_reader.skip();
 
