@@ -523,7 +523,7 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
   }
   if (result == 0xfe)
   {
-    setError ("You are using old password, please update it use PASSWORD(), other than OLD_PASSWORD().", 4, UME_OTHER);
+    setError ("Old Authentication Method switch from server. Not supported by this client.", 4, UME_OTHER);
     m_dbgMethodProgress --;
     return false;
   }
