@@ -847,9 +847,15 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
             self->PFN_PyUnicode_Encode = PyUnicode_EncodeCP1250Helper;
           }
           else
-          {
-            return PyErr_Format (PyExc_ValueError, "Unsupported character set '%s' specified", pstrCharset);
-          }
+            if (strcmp (pstrCharset, "utf8mb4") == 0)
+            {
+              self->charset = MCS_utf8mb4_general_ci;
+              self->PFN_PyUnicode_Encode = PyUnicode_EncodeUTF8;
+            }
+            else
+               {
+                 return PyErr_Format (PyExc_ValueError, "Unsupported character set '%s' specified", pstrCharset);
+               }
   }
   else
   {
