@@ -250,6 +250,29 @@ INT64 parseINT64(char *start, char *end)
   return intValue * intNeg;
 }
 
+UINT64 parseUINT64(char *start, char *end)
+{
+  UINT64 uintValue = 0;
+  INT64 chr;
+
+  while (start < end)
+  {
+    chr = (INT32) (unsigned char) *(start++);
+
+    switch (chr)
+    {
+    case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+      uintValue = uintValue * 10 + (UINT64) (chr - 48);
+      break;
+
+    default:
+      break;
+    }
+  }
+
+  return uintValue;
+}
+
 static PyObject *DecodeString (UMTypeInfo *ti, char *value, size_t cbValue)
 {
   //FIXME: This code must be endiness aware of system isn't little endian
@@ -516,10 +539,18 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
       Py_IncRef(valobj);
       break;
 
+      // Use PyLong for "INT UNSIGNED".
+    case MFTYPE_LONG:
+      if(isUnsigned(ti->flags)){
+        // XXX: No overflow detected.
+        valobj = PyLong_FromLongLong(parseINT64 (value, ((char *) value) + cbValue));
+        break;
+      }
+      // "INT" only, let it fall through to PyInt.
+
       //PyInt
     case MFTYPE_TINY:
     case MFTYPE_SHORT:
-    case MFTYPE_LONG:
     case MFTYPE_INT24:
       {
         valobj = PyInt_FromLong(parseINT32 (value, ((char *) value) + cbValue));
@@ -529,7 +560,11 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
       //PyLong
     case MFTYPE_LONGLONG:
       {
-        valobj = PyLong_FromLongLong(parseINT64 (value, ((char *) value) + cbValue));
+        if(isUnsigned(ti->flags)){
+          valobj = PyLong_FromUnsignedLongLong(parseUINT64 (value, ((char *) value) + cbValue));
+        }else{
+          valobj = PyLong_FromLongLong(parseINT64 (value, ((char *) value) + cbValue));
+        }
         break;
       }
 
