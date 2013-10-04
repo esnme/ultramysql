@@ -140,6 +140,14 @@ enum MYSQL_FIELDTYPE
   MFTYPE_GEOMETRY = 0xff,
 };
 
+/**
+ * Field flags.
+ * See mysql_com.h
+ */
+#define UNSIGNED_FLAG         0x20
+
+#define isUnsigned(flags)    (0 != ((flags) & UNSIGNED_FLAG))
+
 enum MYSQL_CAPABILITIES
 {
   MCP_LONG_PASSWORD			= (1 << 0), // new more secure passwords 

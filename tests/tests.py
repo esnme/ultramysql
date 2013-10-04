@@ -777,6 +777,29 @@ class TestMySQL(unittest.TestCase):
         result = cnn.query(select, (idx,))
         self.assertEqual(result.rows[0], (idx, ts))
 
+    def testUnsignedInt(self):
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
+        cnn.query('DROP TABLE IF EXISTS tblunsignedint')
+        cnn.query('''CREATE TABLE tblunsignedint(
+            `big` BIGINT UNSIGNED NOT NULL,
+            `int` INT UNSIGNED NOT NULL,
+            `medium` MEDIUMINT UNSIGNED NOT NULL,
+            `short` SMALLINT UNSIGNED NOT NULL,
+            `tiny` TINYINT UNSIGNED NOT NULL
+        )''')
+        values1 = (0xffffffffffffffffL, 0xffffffff, 0xffffff, 0xffff, 0xff, )
+        values2 = (0x8000000000000000L, 0x80000000, 0x800000, 0x8000, 0x80, )
+        values3 = (0x8fedcba098765432L, 0x8fedcba0, 0x8fedcb, 0x8fed, 0x8f, )
+        rc, rid = cnn.query('INSERT INTO `tblunsignedint` VALUES(%s, %s, %s, %s, %s)', values1)
+        self.assertEqual(rc, 1)
+        rc, rid = cnn.query('INSERT INTO `tblunsignedint` VALUES(%s, %s, %s, %s, %s)', values2)
+        self.assertEqual(rc, 1)
+        rc, rid = cnn.query('INSERT INTO `tblunsignedint` VALUES(%s, %s, %s, %s, %s)', values3)
+        self.assertEqual(rc, 1)
+        rs = cnn.query('SELECT * FROM `tblunsignedint`')
+        self.assertEquals([values1, values2, values3, ], rs.rows)
+        cnn.close()
 
 if __name__ == '__main__':
     from guppy import hpy
