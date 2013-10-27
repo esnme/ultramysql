@@ -745,6 +745,32 @@ class TestMySQL(unittest.TestCase):
 
         cnn.close()
 
+    def testUtf8mb4(self):
+        utf8mb4chr = u'\U0001f603'
+
+        # We expected we can insert utf8mb4 character, than fetch it back
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+
+        cnn.query("drop table if exists tblutf8mb4")
+        cnn.query("create table tblutf8mb4 (test_text TEXT DEFAULT NULL) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4")
+
+        cnn.query("insert into tblutf8mb4 (test_text) values ('" + utf8mb4chr + "')")
+        cnn.query("set names utf8mb4")
+        cnn.query("insert into tblutf8mb4 (test_text) values ('" + utf8mb4chr + "')")
+
+        rs = cnn.query("select test_text from tblutf8mb4;")
+        result = rs.rows
+        self.assertNotEquals(result[0][0], utf8mb4chr)
+        self.assertEquals(result[1][0], utf8mb4chr)
+
+        cnn.query("set names utf8")
+        rs = cnn.query("select test_text from tblutf8mb4;")
+        result = rs.rows
+        self.assertNotEquals(result[1][0], utf8mb4chr)
+
+        cnn.close()
+
     def testPercentEscaping(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
