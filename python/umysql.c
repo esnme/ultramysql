@@ -369,6 +369,28 @@ static PyObject *DecodeString (UMTypeInfo *ti, char *value, size_t cbValue)
   case MCS_utf8_esperanto_ci://209,
   case MCS_utf8_hungarian_ci://210,
   case MCS_utf8_sinhala_ci://211,
+  case MCS_utf8mb4_general_ci://45,
+  case MCS_utf8mb4_bin://46,
+  case MCS_utf8mb4_unicode_ci://224,
+  case MCS_utf8mb4_icelandic_ci://225,
+  case MCS_utf8mb4_latvian_ci://226,
+  case MCS_utf8mb4_romanian_ci://227,
+  case MCS_utf8mb4_slovenian_ci://228,
+  case MCS_utf8mb4_polish_ci://229,
+  case MCS_utf8mb4_estonian_ci://230,
+  case MCS_utf8mb4_spanish_ci://231,
+  case MCS_utf8mb4_swedish_ci://232,
+  case MCS_utf8mb4_turkish_ci://233,
+  case MCS_utf8mb4_czech_ci://234,
+  case MCS_utf8mb4_danish_ci://235,
+  case MCS_utf8mb4_lithuanian_ci://236,
+  case MCS_utf8mb4_slovak_ci://237,
+  case MCS_utf8mb4_spanish2_ci://238,
+  case MCS_utf8mb4_roman_ci://239,
+  case MCS_utf8mb4_persian_ci://240,
+  case MCS_utf8mb4_esperanto_ci://241,
+  case MCS_utf8mb4_hungarian_ci://242,
+  case MCS_utf8mb4_sinhala_ci://243,
     return PyUnicode_DecodeUTF8 (value, cbValue, NULL);
 
   case MCS_ucs2_general_ci://35,
@@ -409,28 +431,6 @@ static PyObject *DecodeString (UMTypeInfo *ti, char *value, size_t cbValue)
   case MCS_latin7_general_ci://41,
   case MCS_latin7_general_cs://42,
   case MCS_latin7_bin://79,
-  case MCS_utf8mb4_general_ci://45,
-  case MCS_utf8mb4_bin://46,
-  case MCS_utf8mb4_unicode_ci://224,
-  case MCS_utf8mb4_icelandic_ci://225,
-  case MCS_utf8mb4_latvian_ci://226,
-  case MCS_utf8mb4_romanian_ci://227,
-  case MCS_utf8mb4_slovenian_ci://228,
-  case MCS_utf8mb4_polish_ci://229,
-  case MCS_utf8mb4_estonian_ci://230,
-  case MCS_utf8mb4_spanish_ci://231,
-  case MCS_utf8mb4_swedish_ci://232,
-  case MCS_utf8mb4_turkish_ci://233,
-  case MCS_utf8mb4_czech_ci://234,
-  case MCS_utf8mb4_danish_ci://235,
-  case MCS_utf8mb4_lithuanian_ci://236,
-  case MCS_utf8mb4_slovak_ci://237,
-  case MCS_utf8mb4_spanish2_ci://238,
-  case MCS_utf8mb4_roman_ci://239,
-  case MCS_utf8mb4_persian_ci://240,
-  case MCS_utf8mb4_esperanto_ci://241,
-  case MCS_utf8mb4_hungarian_ci://242,
-  case MCS_utf8mb4_sinhala_ci://243,
   case MCS_cp1251_bulgarian_ci://14,
   case MCS_cp1251_ukrainian_ci://23,
   case MCS_cp1251_bin://50,
@@ -882,9 +882,15 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
             self->PFN_PyUnicode_Encode = PyUnicode_EncodeCP1250Helper;
           }
           else
-          {
-            return PyErr_Format (PyExc_ValueError, "Unsupported character set '%s' specified", pstrCharset);
-          }
+            if (strcmp (pstrCharset, "utf8mb4") == 0)
+            {
+              self->charset = MCS_utf8mb4_general_ci;
+              self->PFN_PyUnicode_Encode = PyUnicode_EncodeUTF8;
+            }
+            else
+               {
+                 return PyErr_Format (PyExc_ValueError, "Unsupported character set '%s' specified", pstrCharset);
+               }
   }
   else
   {
