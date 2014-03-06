@@ -827,6 +827,15 @@ class TestMySQL(unittest.TestCase):
         self.assertEquals([values1, values2, values3, ], rs.rows)
         cnn.close()
 
+    def testLongStrReprObjParam(self):
+        cnn = umysql.Connection()
+        cnn.connect (DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
+        obj = range(1000)
+        result = cnn.query("SELECT '%s'", (obj,))
+        self.assertEqual(result.rows[0][0], str(obj))
+        cnn.close()
+
+
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()

@@ -1082,7 +1082,11 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
       if (PyUnicode_Check(arg))
         cbOutQuery += (PyUnicode_GET_SIZE(arg) * 6);
       else
-        cbOutQuery += 64;
+      {
+        int len = PyString_GET_SIZE(PyObject_Str(arg));
+        if (len < 64) len = 64;
+        cbOutQuery += len;
+      }
 
     Py_DECREF(arg);
   }
