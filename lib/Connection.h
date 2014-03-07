@@ -108,6 +108,7 @@ private:
   UMConnectionCAPI m_capi;
 
   int m_dbgMethodProgress;
+  int m_dbgFailedRecv;
 
 public:
 

@@ -83,6 +83,7 @@ Connection::Connection (UMConnectionCAPI *_capi)
   m_errno = -1;
   memcpy (&m_capi, _capi, sizeof (UMConnectionCAPI));
   m_dbgMethodProgress = 0;
+  m_dbgFailedRecv = 0;
   m_errorType = UME_OTHER;
 }
 
@@ -736,6 +737,18 @@ void *Connection::query(const char *_query, size_t _cbQuery)
     return NULL;
   }
 
+  if (m_dbgFailedRecv > 0)
+  {
+    if (!recvPacket())
+    {
+      m_dbgMethodProgress --;
+      return NULL;
+    }
+
+    m_reader.skip(); // pop dirty packages sent succ but recv failed
+    m_dbgFailedRecv --;
+  }
+
   size_t len = _cbQuery;
 
   if (len > m_writer.getSize () - (MYSQL_PACKET_HEADER_SIZE + 1))
@@ -762,6 +775,7 @@ void *Connection::query(const char *_query, size_t _cbQuery)
   {
     PRINTMARK();
     m_dbgMethodProgress --;
+    m_dbgFailedRecv ++;
     return NULL;
   }
 
