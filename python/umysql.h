@@ -101,6 +101,7 @@ typedef struct __UMConnectionCAPI
   void (*resultRowEnd)(void *result);
   void (*destroyResult)(void *result);
   void *(*resultOK)(UINT64 affected, UINT64 insertId, int serverStatus, const char *message, size_t len);
+  int (*sslWrapSocket)(void **sock, const char *key, const char *cert, const char *ca);
 
 
 } UMConnectionCAPI;
@@ -119,7 +120,7 @@ typedef void * UMConnection;
 UMConnection UMConnection_Create(UMConnectionCAPI *_capi);
 void UMConnection_Destroy(UMConnection _conn);
 void *UMConnection_Query(UMConnection conn, const char *_query, size_t _cbQuery);
-int  UMConnection_Connect (UMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, int _charset);
+int  UMConnection_Connect (UMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, int _charset, int _useSsl, const char *_key, const char *_cert, const char *_ca);
 int UMConnection_GetLastError (UMConnection conn, const char **_ppOutMessage, int *_outErrno, int *_type);
 int UMConnection_GetTxBufferSize (UMConnection conn);
 int UMConnection_GetRxBufferSize (UMConnection conn);

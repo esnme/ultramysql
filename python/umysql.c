@@ -125,6 +125,7 @@ void *API_getSocket();
 void API_closeSocket(void *sock);
 void API_deleteSocket(void *sock);
 int API_connectSocket(void *sock, const char *host, int port);
+int API_sslWrapSocket(void **sock, const char *key, const char *cert, const char *ca);
 int API_setTimeout(void *sock, int timeoutSec);
 int API_recvSocket(void *sock, char *buffer, int cbBuffer);
 int API_sendSocket(void *sock, const char *buffer, int cbBuffer);
@@ -717,7 +718,8 @@ UMConnectionCAPI capi = {
   API_resultRowValue,
   API_resultRowEnd,
   API_destroyResult,
-  API_resultOK
+  API_resultOK,
+  API_sslWrapSocket
 };
 
 
@@ -834,7 +836,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 {
   /*
   Args:
-  UMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int _autoCommit, const char *_charset*/
+  UMConnection conn, const char *_host, int _port, const char *_username, const char *_password, const char *_database, int _autoCommit, const char *_charset, dict *_ssl*/
 
   char *host;
   int port;
@@ -845,8 +847,13 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
   int autoCommit;
   char *pstrCharset = NULL;
   PyObject *acObj = NULL;
+  PyObject *sslObj = NULL;
+  
+  char *key = NULL;
+  char *cert = NULL;
+  char *ca = NULL;
 
-  if (!PyArg_ParseTuple (args, "sisss|Os", &host, &port, &username, &password, &database, &acObj, &pstrCharset))
+  if (!PyArg_ParseTuple (args, "sisss|OsO", &host, &port, &username, &password, &database, &acObj, &pstrCharset, &sslObj))
   {
     return NULL;
   }
@@ -855,6 +862,29 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
   {
     PRINTMARK();
     autoCommit = (PyObject_IsTrue(acObj) == 1) ? 1 : 0;
+  }
+  if (sslObj)
+  {
+    if (!PyDict_Check(sslObj))
+    {
+      return PyErr_Format (PyExc_ValueError, "Argument ssl to connect() is not a dict");
+    }
+
+    PyObject *keyObj = PyDict_GetItemString(sslObj, "key");
+    PyObject *certObj = PyDict_GetItemString(sslObj, "cert");
+    PyObject *caObj = PyDict_GetItemString(sslObj, "ca");
+    if (PyString_Check(keyObj))
+    {
+      key = PyString_AsString(keyObj);
+    }
+    if (PyString_Check(certObj))
+    {
+      cert = PyString_AsString(certObj);
+    }
+    if (PyString_Check(caObj))
+    {
+      ca = PyString_AsString(caObj);
+    }
   }
   if (pstrCharset)
   {
@@ -898,7 +928,7 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
     self->PFN_PyUnicode_Encode = PyUnicode_EncodeUTF8;
   }
 
-  if (!UMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, self->charset))
+  if (!UMConnection_Connect (self->conn, host, port, username, password, database, acObj ? &autoCommit : NULL, self->charset, sslObj ? 1 : 0, key, cert, ca))
   {
     return HandleError(self, "connect");
   }

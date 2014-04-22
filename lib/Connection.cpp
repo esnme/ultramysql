@@ -240,6 +240,7 @@ bool Connection::processHandshake()
 {
   // Parse data
   UINT8 protocolVersion = m_reader.readByte();
+  int nextPacket = 1;
 
   if (protocolVersion == 0xff)
   {
@@ -286,7 +287,14 @@ bool Connection::processHandshake()
 
     m_clientCaps  &= ~MCP_COMPRESS;
     m_clientCaps  &= ~MCP_NO_SCHEMA;
-    m_clientCaps &= ~MCP_SSL;
+    if (m_useSsl)
+    {
+      m_clientCaps |= MCP_SSL;
+    }
+    else
+    {
+      m_clientCaps &= ~MCP_SSL;
+    }
 
     if (!(serverCaps & MCP_CONNECT_WITH_DB) && !m_database.empty())
     {
@@ -316,6 +324,30 @@ bool Connection::processHandshake()
 
     for (int filler = 0; filler < 23; filler ++)
       m_writer.writeByte(0x00);
+  
+    if (m_useSsl)
+    {
+      // Send SSL Request Packet
+      m_writer.finalize(nextPacket);
+      if (!sendPacket())
+      {
+        return false;
+      }
+      m_writer.reset();
+      nextPacket++;
+      
+      if (!m_capi.sslWrapSocket(&m_sockInst, m_key.c_str(), m_cert.c_str(), m_ca.c_str()))
+      {
+        return false;
+      }
+      
+      // Send Handshake Response Packet
+      m_writer.writeLong (m_clientCaps);
+      m_writer.writeLong (MYSQL_PACKET_SIZE);
+      m_writer.writeByte(m_charset != MCS_UNDEFINED ? (UINT8) (int) m_charset : serverLang);
+      for (int filler = 0; filler < 23; filler ++)
+        m_writer.writeByte(0x00);
+    }
 
     m_writer.writeNTString(m_username.c_str ());
 
@@ -337,7 +369,7 @@ bool Connection::processHandshake()
       m_writer.writeNTString(m_database.c_str());
     }
 
-    m_writer.finalize(1);
+    m_writer.finalize(nextPacket);
 
     return true;
 }
@@ -428,7 +460,7 @@ bool Connection::getLastError (const char **_ppOutMessage, int *_outErrno, int *
 }
 
 
-bool Connection::connect(const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, MYSQL_CHARSETS _charset)
+bool Connection::connect(const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, MYSQL_CHARSETS _charset, bool _useSsl, const char *_key, const char *_cert, const char *_ca)
 {
   m_dbgMethodProgress ++;
 
@@ -458,6 +490,10 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
   m_database = _database ? _database : "";
   m_autoCommit = _autoCommit ? (*_autoCommit) != 0 : false;
   m_charset = _charset;
+  m_key = _key ? _key : "";
+  m_cert = _cert ? _cert : "";
+  m_ca = _ca ? _ca : "";
+  m_useSsl = _useSsl;
 
   PRINTMARK();
   m_sockInst = m_capi.getSocket();
