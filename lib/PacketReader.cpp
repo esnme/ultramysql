@@ -76,7 +76,7 @@ PacketReader::PacketReader (size_t _cbSize)
 
 PacketReader::~PacketReader (void)
 {
-  delete m_buffStart;
+  delete[] m_buffStart;
 }
 
 void PacketReader::skip()
