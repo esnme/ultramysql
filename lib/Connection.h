@@ -94,6 +94,10 @@ private:
   std::string m_database;
   bool m_autoCommit;
   MYSQL_CHARSETS m_charset;
+  std::string m_key;
+  std::string m_cert;
+  std::string m_ca;
+  bool m_useSsl;
   void *m_sockInst;
   PacketReader m_reader;
   PacketWriter m_writer;
@@ -115,7 +119,7 @@ public:
 public:
   Connection(UMConnectionCAPI *_capi);
   ~Connection();
-  bool connect(const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, MYSQL_CHARSETS _charset);
+  bool connect(const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, MYSQL_CHARSETS _charset, bool _useSsl, const char *_key, const char *_cert, const char *_ca);
   //void handleSocketEvent (SocketEvents _evt);
   void *query(const char *_query, size_t _cbQuery);
   bool getLastError (const char **_ppOutMessage, int *_outErrno, int *_outErrorType);

@@ -85,6 +85,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)		
 #define PRINTMARK() 		
 
+static PyObject *sslWrapSocket = NULL;
+static PyObject *sslCertRequired = NULL;
+static PyObject *sslProtocolTlsV1 = NULL;
+
 void *API_getSocket()
 {
   /* Create a normal socket */
@@ -92,6 +96,7 @@ void *API_getSocket()
   //FIXME: PyModule will leak
   static PyObject *sockmodule = NULL;
   static PyObject *sockclass = NULL;
+  static PyObject *sslmodule = NULL;
   static int once = 1;
 
   if (once)
@@ -120,6 +125,40 @@ void *API_getSocket()
     }
 
     if (!PyCallable_Check(sockclass))
+    {
+      PRINTMARK();
+      return NULL;
+    }
+
+    sslmodule = PyImport_ImportModule ("ssl");
+    if (sslmodule == NULL)
+    {
+      PRINTMARK();
+      return NULL;
+    }
+    
+    sslWrapSocket = PyObject_GetAttrString(sslmodule, "wrap_socket");
+    if (sslWrapSocket == NULL)
+    {
+      PRINTMARK();
+      return NULL;
+    }
+    
+    if (!PyCallable_Check(sslWrapSocket))
+    {
+      PRINTMARK();
+      return NULL;
+    }
+    
+    sslCertRequired = PyObject_GetAttrString(sslmodule, "CERT_REQUIRED");
+    if (sslCertRequired == NULL)
+    {
+      PRINTMARK();
+      return NULL;
+    }
+    
+    sslProtocolTlsV1 = PyObject_GetAttrString(sslmodule, "PROTOCOL_TLSv1");
+    if (sslProtocolTlsV1 == NULL)
     {
       PRINTMARK();
       return NULL;
@@ -214,6 +253,39 @@ int API_connectSocket(void *sock, const char *host, int port)
   PRINTMARK();
 
   Py_DECREF(res);
+  return 1;
+}
+
+int API_sslWrapSocket(void **sock, const char *key, const char *cert, const char *ca)
+{
+  PyObject *res;
+  
+  PRINTMARK();
+  
+  PyObject *kwargsDict = Py_BuildValue("{s:s,s:s,s:s,s:O,s:O}", "keyfile", key, "certfile", cert, "ca_certs", ca, "ssl_version", sslProtocolTlsV1, "cert_reqs", sslCertRequired);
+  if (kwargsDict == NULL)
+  {
+    PRINTMARK();
+    return 0;
+  }
+  
+  PyObject *argsTuple = PyTuple_Pack(1, (PyObject *)*sock);
+  
+  res = PyObject_Call(sslWrapSocket, argsTuple, kwargsDict);
+  
+  Py_DECREF(argsTuple);
+  Py_DECREF(kwargsDict);
+  
+  if (res == NULL)
+  {
+    PRINTMARK();
+    return 0;
+  }
+  
+  PRINTMARK();
+  
+  Py_DECREF(*sock);
+  *sock = res;
   return 1;
 }
 
