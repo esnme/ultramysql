@@ -83,6 +83,7 @@ Connection::Connection (UMConnectionCAPI *_capi)
   m_errno = -1;
   memcpy (&m_capi, _capi, sizeof (UMConnectionCAPI));
   m_dbgMethodProgress = 0;
+  m_dbgFailedRecv = 0;
   m_errorType = UME_OTHER;
 }
 
@@ -736,6 +737,7 @@ void *Connection::query(const char *_query, size_t _cbQuery)
     return NULL;
   }
 
+
   size_t len = _cbQuery;
 
   if (len > m_writer.getSize () - (MYSQL_PACKET_HEADER_SIZE + 1))
@@ -762,36 +764,63 @@ void *Connection::query(const char *_query, size_t _cbQuery)
   {
     PRINTMARK();
     m_dbgMethodProgress --;
+    m_dbgFailedRecv ++;
     return NULL;
   }
 
-  UINT8 result = m_reader.readByte();
-
-  switch (result)
+  void * topResult = NULL;
+  bool again;
+  do
   {
-  case 0x00:
-    PRINTMARK();
-    m_dbgMethodProgress --;
-    return handleOKPacket();
+    again = false;
 
-  case 0xff:
-    PRINTMARK();
-    handleErrorPacket();
-    m_dbgMethodProgress --;
-    return NULL;
+    UINT8 result = m_reader.readByte();
 
-  case 0xfe:
-    PRINTMARK();
-    setError ("Unexpected EOF when decoding result", 0, UME_OTHER);
-    m_dbgMethodProgress --;
-    return NULL;
+    switch (result)
+    {
+    case 0x00:
+      PRINTMARK();
+      m_dbgMethodProgress --;
+      topResult = handleOKPacket();
+      break;
+
+    case 0xff:
+      PRINTMARK();
+      handleErrorPacket();
+      m_dbgMethodProgress --;
+      topResult = NULL;
+      break;
+
+    case 0xfe:
+      PRINTMARK();
+      setError ("Unexpected EOF when decoding result", 0, UME_OTHER);
+      m_dbgMethodProgress --;
+      topResult = NULL;
+      break;
+
+    default:
+      PRINTMARK();
+      m_dbgMethodProgress --;
+      topResult = handleResultPacket((int)result);
+      break;
+    }
 
 
-  default:
-    PRINTMARK();
-    m_dbgMethodProgress --;
-    return handleResultPacket((int)result);
-  }
+    if (m_dbgFailedRecv > 0)
+    {
+      again = true;
+      if (!recvPacket())
+      {
+        m_dbgMethodProgress --;
+        return NULL;
+      }
+
+      m_dbgFailedRecv --;
+    }
+
+  }while(again);
+
+  return topResult;
 
   PRINTMARK();
   m_dbgMethodProgress --;
