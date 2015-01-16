@@ -480,6 +480,9 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
   if (!connectSocket())
   {
     m_dbgMethodProgress --;
+    m_capi.closeSocket(m_sockInst);
+    m_capi.deleteSocket(m_sockInst);
+    m_sockInst = NULL;
     return false;
   }
 
