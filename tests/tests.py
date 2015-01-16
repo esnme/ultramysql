@@ -149,7 +149,7 @@ class TestMySQL(unittest.TestCase):
         try:
             res = cnn.query("select * from kaka");
             assert False, "Expected exception"
-        except(socket.error):    
+        except(RuntimeError):
             pass
         cnn.close()
 
@@ -161,6 +161,7 @@ class TestMySQL(unittest.TestCase):
             assert False, "Expected exception"
         except(socket.error):
             pass
+        self.assertFalse(cnn.is_connected())
         cnn.close()
 
     def testConnectDNSFails(self):
