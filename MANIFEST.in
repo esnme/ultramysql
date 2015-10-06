@@ -1,6 +1,6 @@
 include README
 include LICENSE
-include python\*.c
-include python\*.h
-include lib\*.cpp
-include lib\*.h
+include python/*.c
+include python/*.h
+include lib/*.cpp
+include lib/*.h
