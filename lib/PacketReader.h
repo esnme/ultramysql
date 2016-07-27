@@ -76,6 +76,7 @@ public:
   PacketReader (size_t cbSize);
   ~PacketReader (void);
   void skip();
+  void defrag();
   void push(size_t _cbData);
   char *getWritePtr();
   char *getStartPtr();
