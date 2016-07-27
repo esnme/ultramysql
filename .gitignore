@@ -1,2 +1,4 @@
 /build
 *.pyc
+umysql.egg-info
+umysql.so
