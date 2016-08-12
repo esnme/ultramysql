@@ -64,6 +64,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define BYTEORDER_UINT16(_x) (_x)
 #define BYTEORDER_UINT32(_x) (_x)
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 PacketReader::PacketReader (size_t _cbSize)
 {
@@ -94,6 +95,18 @@ void PacketReader::skip()
     m_writeCursor = m_buffStart;
     m_packetEnd = NULL;
   }
+}
+
+void PacketReader::freeSpace()
+{
+  size_t len = m_writeCursor - m_readCursor;
+  memmove( m_buffStart, m_readCursor, len );
+
+  if ( m_packetEnd != NULL )
+    m_packetEnd = m_buffStart + (m_buffStart - m_readCursor);
+
+  m_writeCursor = m_buffStart + len;
+  m_readCursor = m_buffStart;
 }
 
 void PacketReader::push(size_t _cbData)
