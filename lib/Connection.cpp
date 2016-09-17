@@ -134,17 +134,17 @@ void Connection::scramble(const char *_scramble1, const char *_scramble2, UINT8 
 
 bool Connection::readSocket()
 {
+
   size_t bytesToRecv = m_reader.getEndPtr() - m_reader.getWritePtr();
   assert (bytesToRecv <= m_reader.getEndPtr() - m_reader.getWritePtr()); 
 
   if (bytesToRecv == 0)
   {
-    // Socket buffer got full!
-    setError("Socket receive buffer full", 0, UME_OTHER);
-    return false;
+    // Socket buffer got full, so we re resize
+      m_reader.resizeBuffer(m_reader.getSize()*2);
   }
-  else
-    if (bytesToRecv > 65536)
+
+    if (bytesToRecv > 65536 || bytesToRecv == 0)
     {
       bytesToRecv = 65536;
     }

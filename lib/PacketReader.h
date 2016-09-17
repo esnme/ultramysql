@@ -81,6 +81,7 @@ public:
   char *getStartPtr();
   char *getEndPtr();
   size_t getSize();
+  char *resizeBuffer(size_t new_size);
   bool havePacket();
 
   UINT8 readByte();
