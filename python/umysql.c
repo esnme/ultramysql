@@ -571,7 +571,9 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
       //PyFloat
     case MFTYPE_FLOAT:
     case MFTYPE_DOUBLE:
-      {
+    case MFTYPE_DECIMAL:
+    case MFTYPE_NEWDECIMAL:
+    {
         //FIXME: Too fucking slow
         PyObject *sobj = PyString_FromStringAndSize((char *) value, cbValue);
         valobj = PyFloat_FromString (sobj, NULL);
@@ -673,9 +675,7 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_ENUM:
     case MFTYPE_GEOMETRY:
     case MFTYPE_BIT:
-    case MFTYPE_NEWDECIMAL:
     case MFTYPE_SET:
-    case MFTYPE_DECIMAL:
       // Fall through for string encoding
       valobj = PyString_FromStringAndSize( (const char *) value, cbValue);
       break;
