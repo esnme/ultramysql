@@ -983,7 +983,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
   if (PyUnicode_Check(obj))
   {
     PRINTMARK();
-    return AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(obj), PyUnicode_AS_UNICODE(obj) + PyString_GET_SIZE(obj), TRUE);
+    return AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(obj), PyUnicode_AS_UNICODE(obj) + PyUnicode_GET_SIZE(obj), TRUE);
   }
   else
     if (PyUnicode_Check(obj))
@@ -1003,7 +1003,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
       }
 
 
-      ret = AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(strobj), PyUnicode_AS_UNICODE(strobj) + PyString_GET_SIZE(strobj), TRUE);
+      ret = AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(strobj), PyUnicode_AS_UNICODE(strobj) + PyUnicode_GET_SIZE(strobj), TRUE);
       Py_DECREF(strobj);
 
       return ret;
@@ -1044,7 +1044,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
           //FIXME: Might possible to avoid this?
           PRINTMARK();
           strobj = PyObject_Str(obj);
-          ret = AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(strobj), PyUnicode_AS_UNICODE(strobj) + PyString_GET_SIZE(strobj), FALSE);
+          ret = AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(strobj), PyUnicode_AS_UNICODE(strobj) + PyUnicode_GET_SIZE(strobj), FALSE);
           Py_DECREF(strobj);
           return ret;
 }
@@ -1064,7 +1064,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
   // Estimate output length
 
-  cbOutQuery += PyString_GET_SIZE(inQuery);
+  cbOutQuery += PyUnicode_GET_SIZE(inQuery);
 
   iterator = PyObject_GetIter(iterable);
 
@@ -1075,7 +1075,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
     // Worst case escape and utf-8
     if (PyUnicode_Check(arg))
-      cbOutQuery += (PyString_GET_SIZE(arg) * 2);
+      cbOutQuery += (PyUnicode_GET_SIZE(arg) * 2);
     else
       if (PyUnicode_Check(arg))
         cbOutQuery += (PyUnicode_GET_SIZE(arg) * 6);
@@ -1259,7 +1259,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     escapedQuery = query;
   }
 
-  ret =  UMConnection_Query(self->conn, PyUnicode_AS_UNICODE(escapedQuery), PyString_GET_SIZE(escapedQuery));
+  ret =  UMConnection_Query(self->conn, PyUnicode_AS_UNICODE(escapedQuery), PyUnicode_GET_SIZE(escapedQuery));
 
   Py_DECREF(escapedQuery);
 

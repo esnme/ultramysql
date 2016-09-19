@@ -235,7 +235,7 @@ int API_recvSocket(void *sock, char *buffer, int cbBuffer)
     return -1;
   }
 
-  ret = (int) PyString_GET_SIZE(res);
+  ret = (int) PyUnicode_GET_SIZE(res);
   memcpy (buffer, PyUnicode_AS_UNICODE(res), ret);
   Py_DECREF(res);
   return ret;
