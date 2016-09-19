@@ -983,7 +983,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
   if (PyString_Check(obj))
   {
     PRINTMARK();
-    return AppendAndEscapeString(start, end, PyString_AS_STRING(obj), PyString_AS_STRING(obj) + PyString_GET_SIZE(obj), TRUE);
+    return AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(obj), PyUnicode_AS_UNICODE(obj) + PyString_GET_SIZE(obj), TRUE);
   }
   else
     if (PyUnicode_Check(obj))
@@ -1003,7 +1003,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
       }
 
 
-      ret = AppendAndEscapeString(start, end, PyString_AS_STRING(strobj), PyString_AS_STRING(strobj) + PyString_GET_SIZE(strobj), TRUE);
+      ret = AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(strobj), PyUnicode_AS_UNICODE(strobj) + PyString_GET_SIZE(strobj), TRUE);
       Py_DECREF(strobj);
 
       return ret;
@@ -1044,7 +1044,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
           //FIXME: Might possible to avoid this?
           PRINTMARK();
           strobj = PyObject_Str(obj);
-          ret = AppendAndEscapeString(start, end, PyString_AS_STRING(strobj), PyString_AS_STRING(strobj) + PyString_GET_SIZE(strobj), FALSE);
+          ret = AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(strobj), PyUnicode_AS_UNICODE(strobj) + PyString_GET_SIZE(strobj), FALSE);
           Py_DECREF(strobj);
           return ret;
 }
@@ -1101,7 +1101,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
 
   optr = obuffer;
-  iptr = PyString_AS_STRING(inQuery);
+  iptr = PyUnicode_AS_UNICODE(inQuery);
 
   hasArg = 0;
 
@@ -1259,7 +1259,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     escapedQuery = query;
   }
 
-  ret =  UMConnection_Query(self->conn, PyString_AS_STRING(escapedQuery), PyString_GET_SIZE(escapedQuery));
+  ret =  UMConnection_Query(self->conn, PyUnicode_AS_UNICODE(escapedQuery), PyString_GET_SIZE(escapedQuery));
 
   Py_DECREF(escapedQuery);
 
