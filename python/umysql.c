@@ -1464,7 +1464,7 @@ static struct PyModuleDef moduledef = {
 };
 
 PyMODINIT_FUNC
-  initumysql(void)
+  PyInit_umysql(void)
 {
   PyObject* m;
   PyObject *dict;
