@@ -259,7 +259,7 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
     return -1;
   }
 
-  ret = (int) PyInt_AsLong(res);
+  ret = (int) PyLong_AsLong(res);
   Py_DECREF(res);
   return ret;
 }
