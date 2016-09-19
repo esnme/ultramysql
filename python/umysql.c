@@ -572,7 +572,7 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
       {
         //FIXME: Too fucking slow
         PyObject *sobj = PyString_FromStringAndSize((char *) value, cbValue);
-        valobj = PyFloat_FromString (sobj, NULL);
+        valobj = PyFloat_FromString (sobj);
         Py_DECREF(sobj);
         break;
       }
