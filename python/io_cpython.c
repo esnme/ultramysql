@@ -82,8 +82,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define alloca _alloca
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)		
-#define PRINTMARK() 		
+//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
+#define PRINTMARK()
 
 void *API_getSocket()
 {
@@ -151,7 +151,7 @@ int API_setTimeout(void *sock, int timeoutSec)
   PRINTMARK();
   intobj = PyFloat_FromDouble( (double) timeoutSec);
 
-  methodObj = PyUnicode_FromUnicode("settimeout");
+  methodObj = PyUnicode_FromString("settimeout");
   PRINTMARK();
   retobj = PyObject_CallMethodObjArgs ((PyObject *) sock, methodObj, intobj, NULL);
   Py_DECREF(intobj);
@@ -167,7 +167,7 @@ int API_setTimeout(void *sock, int timeoutSec)
   Py_DECREF(retobj);
   return 1;
 
-}   
+}
 
 void API_closeSocket(void *sock)
 {
@@ -196,10 +196,10 @@ int API_connectSocket(void *sock, const char *host, int port)
   PRINTMARK();
 
   addrTuple = PyTuple_New(2);
-  PyTuple_SET_ITEM(addrTuple, 0, PyUnicode_FromUnicode(host));
+  PyTuple_SET_ITEM(addrTuple, 0, PyUnicode_FromString(host));
   PyTuple_SET_ITEM(addrTuple, 1, PyInt_FromLong(port));
 
-  connectStr = PyUnicode_FromUnicode("connect");
+  connectStr = PyUnicode_FromString("connect");
   res = PyObject_CallMethodObjArgs( (PyObject *) sock, connectStr, addrTuple, NULL);
 
   Py_DECREF(connectStr);
@@ -224,7 +224,7 @@ int API_recvSocket(void *sock, char *buffer, int cbBuffer)
   PyObject *funcStr;
   int ret;
 
-  funcStr = PyUnicode_FromUnicode("recv");
+  funcStr = PyUnicode_FromString("recv");
   bufSize = PyInt_FromLong(cbBuffer);
   res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, bufSize, NULL);
   Py_DECREF(funcStr);
@@ -248,7 +248,7 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
   PyObject *funcStr;
   int ret;
 
-  funcStr = PyUnicode_FromUnicode("send");
+  funcStr = PyUnicode_FromString("send");
   pybuffer = PyUnicode_FromStringAndSize(buffer, cbBuffer);
   res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, pybuffer, NULL);
   Py_DECREF(funcStr);
@@ -263,4 +263,3 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
   Py_DECREF(res);
   return ret;
 }
-
