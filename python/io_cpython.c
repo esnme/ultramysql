@@ -249,7 +249,7 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
   int ret;
 
   funcStr = PyString_FromString("send");
-  pybuffer = PyString_FromStringAndSize(buffer, cbBuffer);
+  pybuffer = PyUnicode_FromStringAndSize(buffer, cbBuffer);
   res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, pybuffer, NULL);
   Py_DECREF(funcStr);
   Py_DECREF(pybuffer);
