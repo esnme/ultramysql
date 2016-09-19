@@ -1460,19 +1460,19 @@ PyMODINIT_FUNC
 
   m = Py_InitModule3("umysql", methods, "");
   if (m == NULL)
-    return;
+    return m;
 
   dict = PyModule_GetDict(m);
 
   ConnectionType.tp_new = PyType_GenericNew;
   if (PyType_Ready(&ConnectionType) < 0)
-    return;
+    return NULL;
   Py_INCREF(&ConnectionType);
   PyModule_AddObject(m, "Connection", (PyObject *)&ConnectionType);
 
   ResultSetType.tp_new = PyType_GenericNew;
   if (PyType_Ready(&ResultSetType) < 0)
-    return;
+    return m;
   Py_INCREF(&ResultSetType);
   PyModule_AddObject(m, "ResultSet", (PyObject *)&ResultSetType);
 
