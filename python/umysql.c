@@ -145,7 +145,7 @@ void API_resultSetField(void *result, int column, UMTypeInfo *ti, void *_name, s
 {
   PyObject *field = PyTuple_New(2);
   PyTuple_SET_ITEM(field, 0, PyUnicode_FromStringAndSize((const char *)_name, _cbName));
-  PyTuple_SET_ITEM(field, 1, PyInt_FromLong(ti->type));
+  PyTuple_SET_ITEM(field, 1, PyLong_FromLong(ti->type));
   PyTuple_SET_ITEM(((ResultSet *) result)->fields, column, field);
   PRINTMARK();
   return;
@@ -551,7 +551,7 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_SHORT:
     case MFTYPE_INT24:
       {
-        valobj = PyInt_FromLong(parseINT32 (value, ((char *) value) + cbValue));
+        valobj = PyLong_FromLong(parseINT32 (value, ((char *) value) + cbValue));
         break;
       }
 

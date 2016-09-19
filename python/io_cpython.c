@@ -197,7 +197,7 @@ int API_connectSocket(void *sock, const char *host, int port)
 
   addrTuple = PyTuple_New(2);
   PyTuple_SET_ITEM(addrTuple, 0, PyUnicode_FromString(host));
-  PyTuple_SET_ITEM(addrTuple, 1, PyInt_FromLong(port));
+  PyTuple_SET_ITEM(addrTuple, 1, PyLong_FromLong(port));
 
   connectStr = PyUnicode_FromString("connect");
   res = PyObject_CallMethodObjArgs( (PyObject *) sock, connectStr, addrTuple, NULL);
@@ -225,7 +225,7 @@ int API_recvSocket(void *sock, char *buffer, int cbBuffer)
   int ret;
 
   funcStr = PyUnicode_FromString("recv");
-  bufSize = PyInt_FromLong(cbBuffer);
+  bufSize = PyLong_FromLong(cbBuffer);
   res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, bufSize, NULL);
   Py_DECREF(funcStr);
   Py_DECREF(bufSize);
