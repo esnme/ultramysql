@@ -980,7 +980,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
   FIXME: Surround strings with '' could be performed in this function to avoid extra logic in AppendAndEscapeString */
   PRINTMARK();
 
-  if (PyString_Check(obj))
+  if (PyUnicode_Check(obj))
   {
     PRINTMARK();
     return AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(obj), PyUnicode_AS_UNICODE(obj) + PyString_GET_SIZE(obj), TRUE);
@@ -1074,7 +1074,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
     cbOutQuery += 2;
 
     // Worst case escape and utf-8
-    if (PyString_Check(arg))
+    if (PyUnicode_Check(arg))
       cbOutQuery += (PyString_GET_SIZE(arg) * 2);
     else
       if (PyUnicode_Check(arg))
@@ -1210,7 +1210,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     Py_DECREF(iterator);
   }
 
-  if (!PyString_Check(inQuery))
+  if (!PyUnicode_Check(inQuery))
   {
     if (!PyUnicode_Check(inQuery))
     {
