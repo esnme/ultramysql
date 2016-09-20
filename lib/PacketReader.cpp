@@ -117,6 +117,17 @@ char *PacketReader::getEndPtr()
   return m_buffEnd;
 }
 
+char *PacketReader::resizeBuffer(size_t new_size)
+{
+    char * new_m_buffStart = new char[new_size];
+    memcpy(new_m_buffStart, m_buffStart, getSize());
+    m_writeCursor = new_m_buffStart + (m_writeCursor - m_buffStart);
+    m_buffEnd = new_m_buffStart + new_size;
+    m_readCursor = new_m_buffStart + (m_readCursor - m_buffStart);
+    m_packetEnd = new_m_buffStart + (m_packetEnd - m_buffStart);
+    delete m_buffStart;
+    m_buffStart = new_m_buffStart;
+}
 extern void PrintBuffer(FILE *file, void *_offset, size_t len, int perRow);
 
 
