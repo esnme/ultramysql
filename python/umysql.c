@@ -85,9 +85,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define alloca _alloca
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
-#define PRINTMARK() 		
-
+#define PRINTMARK()
 
 static PyTypeObject ConnectionType;
 static PyTypeObject ResultSetType;
@@ -97,7 +95,7 @@ PyObject *umysql_SQLError;
 
 typedef struct {
   PyObject_HEAD
-    PyObject *fields; 
+    PyObject *fields;
   PyObject *rows;
   PyObject *currRow;
   int numFields;
@@ -146,8 +144,8 @@ void *API_createResult(int columns)
 void API_resultSetField(void *result, int column, UMTypeInfo *ti, void *_name, size_t _cbName)
 {
   PyObject *field = PyTuple_New(2);
-  PyTuple_SET_ITEM(field, 0, PyString_FromStringAndSize((const char *)_name, _cbName));
-  PyTuple_SET_ITEM(field, 1, PyInt_FromLong(ti->type));
+  PyTuple_SET_ITEM(field, 0, PyUnicode_FromStringAndSize((const char *)_name, _cbName));
+  PyTuple_SET_ITEM(field, 1, PyLong_FromLong(ti->type));
   PyTuple_SET_ITEM(((ResultSet *) result)->fields, column, field);
   PRINTMARK();
   return;
@@ -156,7 +154,7 @@ void API_resultSetField(void *result, int column, UMTypeInfo *ti, void *_name, s
 void API_resultRowBegin(void *result)
 {
   PRINTMARK();
-  ((ResultSet *)result)->currRow = PyTuple_New(((ResultSet *)result)->numFields);	
+  ((ResultSet *)result)->currRow = PyTuple_New(((ResultSet *)result)->numFields);
   PRINTMARK();
 }
 
@@ -506,7 +504,7 @@ static PyObject *DecodeString (UMTypeInfo *ti, char *value, size_t cbValue)
     break;
 
   case MCS_binary:
-    return PyString_FromStringAndSize(value, cbValue);
+    return PyUnicode_FromStringAndSize(value, cbValue);
 
   default:
     break;
@@ -553,7 +551,7 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_SHORT:
     case MFTYPE_INT24:
       {
-        valobj = PyInt_FromLong(parseINT32 (value, ((char *) value) + cbValue));
+        valobj = PyLong_FromLong(parseINT32 (value, ((char *) value) + cbValue));
         break;
       }
 
@@ -573,8 +571,8 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_DOUBLE:
       {
         //FIXME: Too fucking slow
-        PyObject *sobj = PyString_FromStringAndSize((char *) value, cbValue);
-        valobj = PyFloat_FromString (sobj, NULL);
+        PyObject *sobj = PyUnicode_FromStringAndSize((char *) value, cbValue);
+        valobj = PyFloat_FromString (sobj);
         Py_DECREF(sobj);
         break;
       }
@@ -657,7 +655,7 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_LONG_BLOB:
     case MFTYPE_BLOB:
       if (ti->flags & MFFLAG_BINARY_FLAG) {
-        valobj = PyString_FromStringAndSize( (const char *) value, cbValue);
+        valobj = PyUnicode_FromStringAndSize( (const char *) value, cbValue);
       } else {
         valobj = DecodeString (ti, value, cbValue);
       }
@@ -677,7 +675,7 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_SET:
     case MFTYPE_DECIMAL:
       // Fall through for string encoding
-      valobj = PyString_FromStringAndSize( (const char *) value, cbValue);
+      valobj = PyUnicode_FromStringAndSize( (const char *) value, cbValue);
       break;
 
     }
@@ -756,7 +754,7 @@ PyObject *Connection_setTimeout(Connection *self, PyObject *args)
   }
 
   Py_RETURN_NONE;
-}	
+}
 
 
 PyObject *Connection_isConnected(Connection *self, PyObject *args)
@@ -982,10 +980,10 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
   FIXME: Surround strings with '' could be performed in this function to avoid extra logic in AppendAndEscapeString */
   PRINTMARK();
 
-  if (PyString_Check(obj))
+  if (PyUnicode_Check(obj))
   {
     PRINTMARK();
-    return AppendAndEscapeString(start, end, PyString_AS_STRING(obj), PyString_AS_STRING(obj) + PyString_GET_SIZE(obj), TRUE);
+    return AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(obj), PyUnicode_AS_UNICODE(obj) + PyUnicode_GET_SIZE(obj), TRUE);
   }
   else
     if (PyUnicode_Check(obj))
@@ -1005,7 +1003,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
       }
 
 
-      ret = AppendAndEscapeString(start, end, PyString_AS_STRING(strobj), PyString_AS_STRING(strobj) + PyString_GET_SIZE(strobj), TRUE);
+      ret = AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(strobj), PyUnicode_AS_UNICODE(strobj) + PyUnicode_GET_SIZE(strobj), TRUE);
       Py_DECREF(strobj);
 
       return ret;
@@ -1022,7 +1020,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
       else
         if (PyDateTime_Check(obj))
         {
-          int len = sprintf (start, "'%04d-%02d-%02d %02d:%02d:%02d'", 
+          int len = sprintf (start, "'%04d-%02d-%02d %02d:%02d:%02d'",
             PyDateTime_GET_YEAR(obj),
             PyDateTime_GET_MONTH(obj),
             PyDateTime_GET_DAY(obj),
@@ -1035,7 +1033,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
         else
           if (PyDate_Check(obj))
           {
-            int len = sprintf (start, "'%04d:%02d:%02d'", 
+            int len = sprintf (start, "'%04d:%02d:%02d'",
               PyDateTime_GET_YEAR(obj),
               PyDateTime_GET_MONTH(obj),
               PyDateTime_GET_DAY(obj));
@@ -1046,7 +1044,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
           //FIXME: Might possible to avoid this?
           PRINTMARK();
           strobj = PyObject_Str(obj);
-          ret = AppendAndEscapeString(start, end, PyString_AS_STRING(strobj), PyString_AS_STRING(strobj) + PyString_GET_SIZE(strobj), FALSE);
+          ret = AppendAndEscapeString(start, end, PyUnicode_AS_UNICODE(strobj), PyUnicode_AS_UNICODE(strobj) + PyUnicode_GET_SIZE(strobj), FALSE);
           Py_DECREF(strobj);
           return ret;
 }
@@ -1066,7 +1064,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
   // Estimate output length
 
-  cbOutQuery += PyString_GET_SIZE(inQuery);
+  cbOutQuery += PyUnicode_GET_SIZE(inQuery);
 
   iterator = PyObject_GetIter(iterable);
 
@@ -1076,8 +1074,8 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
     cbOutQuery += 2;
 
     // Worst case escape and utf-8
-    if (PyString_Check(arg))
-      cbOutQuery += (PyString_GET_SIZE(arg) * 2);
+    if (PyUnicode_Check(arg))
+      cbOutQuery += (PyUnicode_GET_SIZE(arg) * 2);
     else
       if (PyUnicode_Check(arg))
         cbOutQuery += (PyUnicode_GET_SIZE(arg) * 6);
@@ -1103,7 +1101,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
 
   optr = obuffer;
-  iptr = PyString_AS_STRING(inQuery);
+  iptr = PyUnicode_AS_UNICODE(inQuery);
 
   hasArg = 0;
 
@@ -1169,7 +1167,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 END_PARSE:
   Py_DECREF(iterator);
 
-  retobj = PyString_FromStringAndSize (obuffer, (optr - obuffer));
+  retobj = PyUnicode_FromStringAndSize (obuffer, (optr - obuffer));
 
   if (heap)
   {
@@ -1212,7 +1210,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     Py_DECREF(iterator);
   }
 
-  if (!PyString_Check(inQuery))
+  if (!PyUnicode_Check(inQuery))
   {
     if (!PyUnicode_Check(inQuery))
     {
@@ -1261,7 +1259,7 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     escapedQuery = query;
   }
 
-  ret =  UMConnection_Query(self->conn, PyString_AS_STRING(escapedQuery), PyString_GET_SIZE(escapedQuery));
+  ret =  UMConnection_Query(self->conn, PyUnicode_AS_UNICODE(escapedQuery), PyUnicode_GET_SIZE(escapedQuery));
 
   Py_DECREF(escapedQuery);
 
@@ -1294,28 +1292,25 @@ static void Connection_Destructor(Connection *self)
   PyObject_Del(self);
 }
 
-static PyMethodDef Connection_methods[] = {
-  {"connect", (PyCFunction)			Connection_connect,			METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
-  {"query", (PyCFunction)				Connection_query,				METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
-  {"close", (PyCFunction)	Connection_close,	METH_NOARGS, "Closes connection"},
-  {"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, "Check connection status"},
-  {"settimeout", (PyCFunction) Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},
-  {NULL}
-};
-static PyMemberDef Connection_members[] = {
+    static PyMethodDef Connection_methods[] = {
+        {"connect", (PyCFunction) Connection_connect, METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
+        {"query", (PyCFunction) Connection_query, METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
+        {"close", (PyCFunction)	Connection_close, METH_NOARGS, "Closes connection"},
+        {"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, "Check connection status"},
+        {"settimeout", (PyCFunction) Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},
+        {NULL}
+    };
 
-  {"Error", T_OBJECT, offsetof(Connection, Error), READONLY},
-  {"SQLError", T_OBJECT, offsetof(Connection, SQLError), READONLY},
-  {"txBufferSize", T_INT, offsetof(Connection, txBufferSize), READONLY, "Size of tx buffer in bytes"},
-  {"rxBufferSize", T_INT, offsetof(Connection, rxBufferSize), READONLY, "Size of rx buffer in bytes"},
-  {NULL}
-};
+    static PyMemberDef Connection_members[] = {
+        {"Error", T_OBJECT, offsetof(Connection, Error), READONLY},
+        {"SQLError", T_OBJECT, offsetof(Connection, SQLError), READONLY},
+        {"txBufferSize", T_INT, offsetof(Connection, txBufferSize), READONLY, "Size of tx buffer in bytes"},
+        {"rxBufferSize", T_INT, offsetof(Connection, rxBufferSize), READONLY, "Size of rx buffer in bytes"},
+        {NULL}
+    };
 
-
-
-static PyTypeObject ConnectionType = { 
-  PyObject_HEAD_INIT(NULL)
-  0,				/* ob_size        */
+static PyTypeObject ConnectionType = {
+  PyVarObject_HEAD_INIT(NULL, 0)
   "umysql.Connection",		/* tp_name        */
   sizeof(Connection),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
@@ -1323,7 +1318,7 @@ static PyTypeObject ConnectionType = {
   0,				/* tp_print       */
   0,				/* tp_getattr     */
   0,				/* tp_setattr     */
-  0,				/* tp_compare     */
+  0,				/* tp_compare tp_as_async tp_reserved    */
   0,				/* tp_repr        */
   0,				/* tp_as_number   */
   0,				/* tp_as_sequence */
@@ -1331,6 +1326,7 @@ static PyTypeObject ConnectionType = {
   0,				/* tp_hash        */
   0,				/* tp_call        */
   0,				/* tp_str         */
+
   0,				/* tp_getattro    */
   0,				/* tp_setattro    */
   0,				/* tp_as_buffer   */
@@ -1351,6 +1347,18 @@ static PyTypeObject ConnectionType = {
   0,				/* tp_descr_set      */
   0,				/* tp_dictoffset     */
   (initproc)Connection_init,		/* tp_init           */
+  0,                /* allocfunc tp_alloc */
+  0,                /* newfunc tp_new */
+  0,                /* freefunc tp_free; */
+  0,                /* inquiry tp_is_gc; */
+  0,                /* PyObject *tp_bases; */
+  0,                /* PyObject *tp_mro; */
+  0,                /* PyObject *tp_cache; */
+  0,                /* PyObject *tp_subclasses; */
+  0,                /* PyObject *tp_weaklist; */
+  0,                /* destructor tp_del; */
+  0,                /* tp_version_tag; */
+  0,                /* tp_finalize; */
 };
 
 int ResultSet_setup(ResultSet *self, int columns)
@@ -1409,9 +1417,8 @@ static PyMemberDef ResultSet_members[] = {
   {NULL}
 };
 
-static PyTypeObject ResultSetType = { 
-  PyObject_HEAD_INIT(NULL)
-  0,				/* ob_size        */
+static PyTypeObject ResultSetType = {
+  PyVarObject_HEAD_INIT(NULL, 0)
   "umysql.ResultSet",		/* tp_name        */
   sizeof(ResultSet),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
@@ -1453,34 +1460,50 @@ static PyMethodDef methods[] = {
   {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyMODINIT_FUNC
-  initumysql(void) 
-{
-  PyObject* m;
-  PyObject *dict;
-  PyDateTime_IMPORT;
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "umysql",     /* m_name */
+    "This is Python3 compatible umysql porting",  /* m_doc */
+    -1,                  /* m_size */
+    methods,    /* m_methods */
+    NULL,                /* m_reload */
+    NULL,                /* m_traverse */
+    NULL,                /* m_clear */
+    NULL,                /* m_free */
+};
 
-  m = Py_InitModule3("umysql", methods, "");
-  if (m == NULL)
-    return;
+PyMODINIT_FUNC PyInit_umysql(void) {
+    PyObject* m;
+    PyObject *dict;
+    PyDateTime_IMPORT;
 
-  dict = PyModule_GetDict(m);
+    m = PyModule_Create(&moduledef);
+    if (m == NULL) {
+        return NULL;
+    }
+    dict = PyModule_GetDict(m);
 
-  ConnectionType.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&ConnectionType) < 0)
-    return;
+    ConnectionType.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&ConnectionType) < 0) {
+        printf("Error while creating type umysql");
+        return NULL;
+    }
+
   Py_INCREF(&ConnectionType);
+
   PyModule_AddObject(m, "Connection", (PyObject *)&ConnectionType);
 
   ResultSetType.tp_new = PyType_GenericNew;
   if (PyType_Ready(&ResultSetType) < 0)
-    return;
+    return m;
   Py_INCREF(&ResultSetType);
   PyModule_AddObject(m, "ResultSet", (PyObject *)&ResultSetType);
 
-  umysql_Error = PyErr_NewException("umysql.Error", PyExc_StandardError, NULL);
+  umysql_Error = PyErr_NewException("umysql.Error", PyExc_Exception, NULL);
   umysql_SQLError = PyErr_NewException("umysql.SQLError", umysql_Error, NULL);
 
   PyDict_SetItemString(dict, "Error", umysql_Error);
   PyDict_SetItemString(dict, "SQLError", umysql_SQLError);
+
+  return m;
 }

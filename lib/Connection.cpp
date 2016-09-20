@@ -68,10 +68,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define snprintf _snprintf
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
-#define PRINTMARK() 		
+//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)
+#define PRINTMARK()
 
-Connection::Connection (UMConnectionCAPI *_capi) 
+Connection::Connection (UMConnectionCAPI *_capi)
   :	m_reader(MYSQL_RX_BUFFER_SIZE)
   , m_writer(MYSQL_TX_BUFFER_SIZE)
 {
@@ -127,7 +127,7 @@ void Connection::scramble(const char *_scramble1, const char *_scramble2, UINT8 
 
   for (int index = 0; index < 20; index ++)
   {
-    _outToken[index] = final_hash[index] ^ stage1_hash[index]; 
+    _outToken[index] = final_hash[index] ^ stage1_hash[index];
   }
 }
 
@@ -135,7 +135,7 @@ void Connection::scramble(const char *_scramble1, const char *_scramble2, UINT8 
 bool Connection::readSocket()
 {
   size_t bytesToRecv = m_reader.getEndPtr() - m_reader.getWritePtr();
-  assert (bytesToRecv <= m_reader.getEndPtr() - m_reader.getWritePtr()); 
+  assert (bytesToRecv <= m_reader.getEndPtr() - m_reader.getWritePtr());
 
   if (bytesToRecv == 0)
   {
@@ -149,9 +149,7 @@ bool Connection::readSocket()
       bytesToRecv = 65536;
     }
 
-
     int recvResult = m_capi.recvSocket(m_sockInst, m_reader.getWritePtr(), bytesToRecv);
-
     if (recvResult == -1)
     {
       return false;
@@ -171,12 +169,9 @@ bool Connection::readSocket()
 bool Connection::writeSocket()
 {
   size_t bytesToSend = m_writer.getWriteCursor() - m_writer.getReadCursor();
-
   assert (bytesToSend > 0);
   assert (bytesToSend < m_writer.getEnd() - m_writer.getStart());
-
   int sendResult = m_capi.sendSocket(m_sockInst, m_writer.getReadCursor(), bytesToSend);
-
   if (sendResult == -1)
   {
     return false;
@@ -187,7 +182,6 @@ bool Connection::writeSocket()
       setError("Connection reset by peer when receiving", 0, UME_OTHER);
       return false;
     }
-
     m_writer.pull(sendResult);
     return true;
 }
@@ -207,7 +201,7 @@ bool Connection::close(void)
       m_writer.finalize(0);
 
       if (!sendPacket())
-      {	
+      {
         m_capi.clearException();
       }
     }
@@ -342,26 +336,18 @@ bool Connection::processHandshake()
     return true;
 }
 
-bool Connection::recvPacket()
-{
-  while (true)
-  {
-    if (m_reader.havePacket())
-    {
-      break;
-    }
-
-    if (!readSocket())
-    {
-      return false;
-    }
-
-    if (m_reader.havePacket())
-    {
-      break;
-    }
+bool Connection::recvPacket() {
+  while (true) {
+      if (m_reader.havePacket()) {
+          break;
+      }
+      if (!readSocket()) {
+          return false;
+      }
+      if (m_reader.havePacket()) {
+          break;
+      }
   }
-
   return true;
 }
 
@@ -428,74 +414,59 @@ bool Connection::getLastError (const char **_ppOutMessage, int *_outErrno, int *
 }
 
 
-bool Connection::connect(const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, MYSQL_CHARSETS _charset)
-{
-  m_dbgMethodProgress ++;
+bool Connection::connect(const char *_host, int _port, const char *_username, const char *_password, const char *_database, int *_autoCommit, MYSQL_CHARSETS _charset) {
+    m_dbgMethodProgress ++;
 
-  if (m_dbgMethodProgress > 1)
-  {
-    /*
-    NOTE: We don't call setError here because it will close the socket worsening the concurrent access error making it impossible to trace */
-    m_errorMessage = "Concurrent access in connect method";
-    m_errno = 0;
-    m_errorType = UME_OTHER;
-    m_dbgMethodProgress --;
-    return false;
-  }
-
-
-  if (m_sockInst != NULL)
-  {
-    m_dbgMethodProgress --;
-    setError ("Socket already connected", 0, UME_OTHER);
-    return false;
-  }
-
-  m_host = _host ? _host : "localhost";
-  m_port = _port ? _port : 3306;
-  m_username = _username ? _username : "";
-  m_password = _password ? _password : "";
-  m_database = _database ? _database : "";
-  m_autoCommit = _autoCommit ? (*_autoCommit) != 0 : false;
-  m_charset = _charset;
-
-  PRINTMARK();
-  m_sockInst = m_capi.getSocket();
-
-  if (m_sockInst == NULL)
-  {
-    m_dbgMethodProgress --;
-    return false;
-  }
-
-  if (m_timeout != -1)
-  {
-    if (!setTimeout (m_timeout))
-    {
-      m_dbgMethodProgress --;
-      return false;
+    if (m_dbgMethodProgress > 1) {
+        /* NOTE: We don't call setError here because it will close the socket worsening the concurrent access error making it impossible to trace */
+        m_errorMessage = "Concurrent access in connect method";
+        m_errno = 0;
+        m_errorType = UME_OTHER;
+        m_dbgMethodProgress --;
+        return false;
     }
-  }
 
-  if (!connectSocket())
-  {
-    m_dbgMethodProgress --;
-    return false;
-  }
+    if (m_sockInst != NULL) {
+        m_dbgMethodProgress --;
+        setError ("Socket already connected", 0, UME_OTHER);
+        return false;
+    }
 
-  PRINTMARK();
-  if (!recvPacket())
-  {
-    m_dbgMethodProgress --;
-    return false;
-  }
+    m_host = _host ? _host : "localhost";
+    m_port = _port ? _port : 3306;
+    m_username = _username ? _username : "";
+    m_password = _password ? _password : "";
+    m_database = _database ? _database : "";
+    m_autoCommit = _autoCommit ? (*_autoCommit) != 0 : false;
+    m_charset = _charset;
 
-  PRINTMARK();
-  if (!processHandshake())
-  {
-    m_dbgMethodProgress --;
-    return false;
-  }
+    PRINTMARK();
+    m_sockInst = m_capi.getSocket();
+
+    if (m_sockInst == NULL) {
+        m_dbgMethodProgress --;
+        return false;
+    }
+    if (m_timeout != -1) {
+        if (!setTimeout (m_timeout)) {
+            m_dbgMethodProgress --;
+            return false;
+        }
+    }
+    if (!connectSocket()) {
+        m_dbgMethodProgress --;
+        return false;
+    }
+    PRINTMARK();
+    if (!recvPacket()) {
+        m_dbgMethodProgress --;
+        return false;
+    }
+    PRINTMARK();
+    if (!processHandshake()) {
+        m_dbgMethodProgress --;
+        return false;
+    }
 
   PRINTMARK();
   if (!sendPacket())
@@ -562,7 +533,6 @@ bool Connection::connect(const char *_host, int _port, const char *_username, co
   PRINTMARK();
   m_state = QUERY_WAIT;
   m_dbgMethodProgress --;
-
   return true;
 }
 

@@ -82,8 +82,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define alloca _alloca
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)		
-#define PRINTMARK() 		
+//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
+#define PRINTMARK()
 
 void *API_getSocket()
 {
@@ -151,7 +151,7 @@ int API_setTimeout(void *sock, int timeoutSec)
   PRINTMARK();
   intobj = PyFloat_FromDouble( (double) timeoutSec);
 
-  methodObj = PyString_FromString("settimeout");
+  methodObj = PyUnicode_FromString("settimeout");
   PRINTMARK();
   retobj = PyObject_CallMethodObjArgs ((PyObject *) sock, methodObj, intobj, NULL);
   Py_DECREF(intobj);
@@ -167,7 +167,7 @@ int API_setTimeout(void *sock, int timeoutSec)
   Py_DECREF(retobj);
   return 1;
 
-}   
+}
 
 void API_closeSocket(void *sock)
 {
@@ -196,10 +196,10 @@ int API_connectSocket(void *sock, const char *host, int port)
   PRINTMARK();
 
   addrTuple = PyTuple_New(2);
-  PyTuple_SET_ITEM(addrTuple, 0, PyString_FromString(host));
-  PyTuple_SET_ITEM(addrTuple, 1, PyInt_FromLong(port));
+  PyTuple_SET_ITEM(addrTuple, 0, PyUnicode_FromString(host));
+  PyTuple_SET_ITEM(addrTuple, 1, PyLong_FromLong(port));
 
-  connectStr = PyString_FromString("connect");
+  connectStr = PyUnicode_FromString("connect");
   res = PyObject_CallMethodObjArgs( (PyObject *) sock, connectStr, addrTuple, NULL);
 
   Py_DECREF(connectStr);
@@ -224,9 +224,15 @@ int API_recvSocket(void *sock, char *buffer, int cbBuffer)
   PyObject *funcStr;
   int ret;
 
-  funcStr = PyString_FromString("recv");
-  bufSize = PyInt_FromLong(cbBuffer);
-  res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, bufSize, NULL);
+  funcStr = PyUnicode_FromString("recv");
+  bufSize = PyLong_FromLong(cbBuffer);
+
+  printf("In Socket Receive:\n");
+  printf("Buffer: %s\n", buffer);
+  printf("Buffer Size: %d\n", cbBuffer);
+
+  res = PyObject_CallMethodObjArgs((PyObject *) sock, funcStr, bufSize, NULL);
+
   Py_DECREF(funcStr);
   Py_DECREF(bufSize);
 
@@ -235,8 +241,9 @@ int API_recvSocket(void *sock, char *buffer, int cbBuffer)
     return -1;
   }
 
-  ret = (int) PyString_GET_SIZE(res);
-  memcpy (buffer, PyString_AS_STRING(res), ret);
+  ret = (int) PyBytes_GET_SIZE(res);
+  printf("Size of res = %d\n", ret);
+  memcpy (buffer, PyBytes_AsString(res), ret);
   Py_DECREF(res);
   return ret;
 }
@@ -248,9 +255,14 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
   PyObject *funcStr;
   int ret;
 
-  funcStr = PyString_FromString("send");
-  pybuffer = PyString_FromStringAndSize(buffer, cbBuffer);
+  printf("In Socket Send\n");
+  printf("Buffer = %s\n", buffer);
+  printf("Buffer Size = %d\n", cbBuffer);
+
+  funcStr = PyUnicode_FromString("send");
+  pybuffer = PyBytes_FromStringAndSize(buffer, cbBuffer);
   res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, pybuffer, NULL);
+
   Py_DECREF(funcStr);
   Py_DECREF(pybuffer);
 
@@ -259,8 +271,7 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
     return -1;
   }
 
-  ret = (int) PyInt_AsLong(res);
+  ret = (int) PyLong_AsLong(res);
   Py_DECREF(res);
   return ret;
 }
-
