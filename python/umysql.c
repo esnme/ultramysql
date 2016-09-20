@@ -1312,8 +1312,7 @@ static PyMemberDef Connection_members[] = {
 
 
 static PyTypeObject ConnectionType = {
-  PyObject_HEAD_INIT(NULL)
-  0,				/* ob_size        */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "umysql.Connection",		/* tp_name        */
   sizeof(Connection),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
@@ -1408,8 +1407,7 @@ static PyMemberDef ResultSet_members[] = {
 };
 
 static PyTypeObject ResultSetType = {
-  PyObject_HEAD_INIT(NULL)
-  0,				/* ob_size        */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "umysql.ResultSet",		/* tp_name        */
   sizeof(ResultSet),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
@@ -1463,23 +1461,25 @@ static struct PyModuleDef moduledef = {
     NULL,                /* m_free */
 };
 
-PyMODINIT_FUNC
-  PyInit_umysql(void)
-{
-  PyObject* m;
-  PyObject *dict;
-  PyDateTime_IMPORT;
+PyMODINIT_FUNC PyInit_umysql(void) {
+    PyObject* m;
+    PyObject *dict;
+    PyDateTime_IMPORT;
 
-  m = PyModule_Create(&moduledef);
-  if (m == NULL)
-    return m;
+    m = PyModule_Create(&moduledef);
+    if (m == NULL) {
+        return NULL;
+    }
+    dict = PyModule_GetDict(m);
 
-  dict = PyModule_GetDict(m);
+    ConnectionType.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&ConnectionType) < 0) {
+        printf("Error while creating type umysql");
+        return NULL;
+    }
 
-  ConnectionType.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&ConnectionType) < 0)
-    return NULL;
   Py_INCREF(&ConnectionType);
+
   PyModule_AddObject(m, "Connection", (PyObject *)&ConnectionType);
 
   ResultSetType.tp_new = PyType_GenericNew;
