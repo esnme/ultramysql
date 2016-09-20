@@ -1292,24 +1292,22 @@ static void Connection_Destructor(Connection *self)
   PyObject_Del(self);
 }
 
-static PyMethodDef Connection_methods[] = {
-  {"connect", (PyCFunction)			Connection_connect,			METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
-  {"query", (PyCFunction)				Connection_query,				METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
-  {"close", (PyCFunction)	Connection_close,	METH_NOARGS, "Closes connection"},
-  {"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, "Check connection status"},
-  {"settimeout", (PyCFunction) Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},
-  {NULL}
-};
-static PyMemberDef Connection_members[] = {
+    static PyMethodDef Connection_methods[] = {
+        {"connect", (PyCFunction) Connection_connect, METH_VARARGS, "Connects to database server. Arguments: host, port, username, password, database, autocommit, charset"},
+        {"query", (PyCFunction) Connection_query, METH_VARARGS, "Performs a query. Arguments: query, arguments to escape"},
+        {"close", (PyCFunction)	Connection_close, METH_NOARGS, "Closes connection"},
+        {"is_connected", (PyCFunction) Connection_isConnected, METH_NOARGS, "Check connection status"},
+        {"settimeout", (PyCFunction) Connection_setTimeout, METH_VARARGS, "Sets connection timeout in seconds"},
+        {NULL}
+    };
 
-  {"Error", T_OBJECT, offsetof(Connection, Error), READONLY},
-  {"SQLError", T_OBJECT, offsetof(Connection, SQLError), READONLY},
-  {"txBufferSize", T_INT, offsetof(Connection, txBufferSize), READONLY, "Size of tx buffer in bytes"},
-  {"rxBufferSize", T_INT, offsetof(Connection, rxBufferSize), READONLY, "Size of rx buffer in bytes"},
-  {NULL}
-};
-
-
+    static PyMemberDef Connection_members[] = {
+        {"Error", T_OBJECT, offsetof(Connection, Error), READONLY},
+        {"SQLError", T_OBJECT, offsetof(Connection, SQLError), READONLY},
+        {"txBufferSize", T_INT, offsetof(Connection, txBufferSize), READONLY, "Size of tx buffer in bytes"},
+        {"rxBufferSize", T_INT, offsetof(Connection, rxBufferSize), READONLY, "Size of rx buffer in bytes"},
+        {NULL}
+    };
 
 static PyTypeObject ConnectionType = {
   PyVarObject_HEAD_INIT(NULL, 0)
@@ -1320,7 +1318,7 @@ static PyTypeObject ConnectionType = {
   0,				/* tp_print       */
   0,				/* tp_getattr     */
   0,				/* tp_setattr     */
-  0,				/* tp_compare     */
+  0,				/* tp_compare tp_as_async tp_reserved    */
   0,				/* tp_repr        */
   0,				/* tp_as_number   */
   0,				/* tp_as_sequence */
@@ -1328,6 +1326,7 @@ static PyTypeObject ConnectionType = {
   0,				/* tp_hash        */
   0,				/* tp_call        */
   0,				/* tp_str         */
+
   0,				/* tp_getattro    */
   0,				/* tp_setattro    */
   0,				/* tp_as_buffer   */
@@ -1348,6 +1347,18 @@ static PyTypeObject ConnectionType = {
   0,				/* tp_descr_set      */
   0,				/* tp_dictoffset     */
   (initproc)Connection_init,		/* tp_init           */
+  0,                /* allocfunc tp_alloc */
+  0,                /* newfunc tp_new */
+  0,                /* freefunc tp_free; */
+  0,                /* inquiry tp_is_gc; */
+  0,                /* PyObject *tp_bases; */
+  0,                /* PyObject *tp_mro; */
+  0,                /* PyObject *tp_cache; */
+  0,                /* PyObject *tp_subclasses; */
+  0,                /* PyObject *tp_weaklist; */
+  0,                /* destructor tp_del; */
+  0,                /* tp_version_tag; */
+  0,                /* tp_finalize; */
 };
 
 int ResultSet_setup(ResultSet *self, int columns)
