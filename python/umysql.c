@@ -85,8 +85,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define alloca _alloca
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
-#define PRINTMARK() 		
+//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)
+#define PRINTMARK()
 
 
 static PyTypeObject ConnectionType;
@@ -97,7 +97,7 @@ PyObject *umysql_SQLError;
 
 typedef struct {
   PyObject_HEAD
-    PyObject *fields; 
+    PyObject *fields;
   PyObject *rows;
   PyObject *currRow;
   int numFields;
@@ -156,7 +156,7 @@ void API_resultSetField(void *result, int column, UMTypeInfo *ti, void *_name, s
 void API_resultRowBegin(void *result)
 {
   PRINTMARK();
-  ((ResultSet *)result)->currRow = PyTuple_New(((ResultSet *)result)->numFields);	
+  ((ResultSet *)result)->currRow = PyTuple_New(((ResultSet *)result)->numFields);
   PRINTMARK();
 }
 
@@ -756,7 +756,7 @@ PyObject *Connection_setTimeout(Connection *self, PyObject *args)
   }
 
   Py_RETURN_NONE;
-}	
+}
 
 
 PyObject *Connection_isConnected(Connection *self, PyObject *args)
@@ -1022,7 +1022,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
       else
         if (PyDateTime_Check(obj))
         {
-          int len = sprintf (start, "'%04d-%02d-%02d %02d:%02d:%02d'", 
+          int len = sprintf (start, "'%04d-%02d-%02d %02d:%02d:%02d'",
             PyDateTime_GET_YEAR(obj),
             PyDateTime_GET_MONTH(obj),
             PyDateTime_GET_DAY(obj),
@@ -1035,7 +1035,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
         else
           if (PyDate_Check(obj))
           {
-            int len = sprintf (start, "'%04d:%02d:%02d'", 
+            int len = sprintf (start, "'%04d:%02d:%02d'",
               PyDateTime_GET_YEAR(obj),
               PyDateTime_GET_MONTH(obj),
               PyDateTime_GET_DAY(obj));
@@ -1313,7 +1313,7 @@ static PyMemberDef Connection_members[] = {
 
 
 
-static PyTypeObject ConnectionType = { 
+static PyTypeObject ConnectionType = {
   PyObject_HEAD_INIT(NULL)
   0,				/* ob_size        */
   "umysql.Connection",		/* tp_name        */
@@ -1409,7 +1409,7 @@ static PyMemberDef ResultSet_members[] = {
   {NULL}
 };
 
-static PyTypeObject ResultSetType = { 
+static PyTypeObject ResultSetType = {
   PyObject_HEAD_INIT(NULL)
   0,				/* ob_size        */
   "umysql.ResultSet",		/* tp_name        */
@@ -1454,7 +1454,7 @@ static PyMethodDef methods[] = {
 };
 
 PyMODINIT_FUNC
-  initumysql(void) 
+  initumysql(void)
 {
   PyObject* m;
   PyObject *dict;
@@ -1478,7 +1478,7 @@ PyMODINIT_FUNC
   Py_INCREF(&ResultSetType);
   PyModule_AddObject(m, "ResultSet", (PyObject *)&ResultSetType);
 
-  umysql_Error = PyErr_NewException("umysql.Error", PyExc_StandardError, NULL);
+  umysql_Error = PyErr_NewException("umysql.Error", PyExc_Exception, NULL);
   umysql_SQLError = PyErr_NewException("umysql.SQLError", umysql_Error, NULL);
 
   PyDict_SetItemString(dict, "Error", umysql_Error);
