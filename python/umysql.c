@@ -674,11 +674,10 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_BLOB:
       if (ti->flags & MFFLAG_BINARY_FLAG) {
           /*
-           * INVESTIGATE:
-           * Previous was PyString_FromStringAndSize
-           * Setting it to PyBytes_FromStringAndSize
+           * Blobs are returned as str and not bytes. Hence rconverting it to
+           * unicode instead of bytes.
            */
-        valobj = PyBytes_FromStringAndSize( (const char *) value, cbValue);
+        valobj = PyUnicode_FromStringAndSize( (const char *) value, cbValue);
       } else {
         valobj = DecodeString (ti, value, cbValue);
       }
