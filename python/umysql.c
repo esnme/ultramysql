@@ -1008,11 +1008,6 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
   FIXME: Surround strings with '' could be performed in this function to avoid extra logic in AppendAndEscapeString */
   PRINTMARK();
 
-  /*
-   * DEBUG: Checking if the PyObject * obj is a bytes object.
-   */
-  printf("In method AppendEscapedArg, obj is bytes = %d\n", PyBytes_Check(obj));
-
   if (PyBytes_Check(obj))
   {
     PRINTMARK();
