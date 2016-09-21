@@ -146,7 +146,13 @@ void *API_createResult(int columns)
 void API_resultSetField(void *result, int column, UMTypeInfo *ti, void *_name, size_t _cbName)
 {
   PyObject *field = PyTuple_New(2);
-  PyTuple_SET_ITEM(field, 0, PyString_FromStringAndSize((const char *)_name, _cbName));
+
+  /*
+   * INVESTIGATE:
+   * Previous was PyString_FromStringAndSize
+   * Setting it to PyUnicode_FromStringAndSize
+   */
+  PyTuple_SET_ITEM(field, 0, PyUnicode_FromStringAndSize((const char *)_name, _cbName));
   PyTuple_SET_ITEM(field, 1, PyInt_FromLong(ti->type));
   PyTuple_SET_ITEM(((ResultSet *) result)->fields, column, field);
   PRINTMARK();
@@ -506,7 +512,12 @@ static PyObject *DecodeString (UMTypeInfo *ti, char *value, size_t cbValue)
     break;
 
   case MCS_binary:
-    return PyString_FromStringAndSize(value, cbValue);
+      /*
+       * INVESTIGATE:
+       * Previous was PyString_FromStringAndSize
+       * Setting it to PyBytes_FromStringAndSize
+       */
+    return PyBytes_FromStringAndSize(value, cbValue);
 
   default:
     break;
@@ -573,7 +584,12 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_DOUBLE:
       {
         //FIXME: Too fucking slow
-        PyObject *sobj = PyString_FromStringAndSize((char *) value, cbValue);
+        /*
+         * INVESTIGATE:
+         * Previous was PyString_FromStringAndSize
+         * Setting it to PyUnicode_FromStringAndSize
+         */
+        PyObject *sobj = PyUnicode_FromStringAndSize((char *) value, cbValue);
         valobj = PyFloat_FromString (sobj);
         Py_DECREF(sobj);
         break;
@@ -657,7 +673,12 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_LONG_BLOB:
     case MFTYPE_BLOB:
       if (ti->flags & MFFLAG_BINARY_FLAG) {
-        valobj = PyString_FromStringAndSize( (const char *) value, cbValue);
+          /*
+           * INVESTIGATE:
+           * Previous was PyString_FromStringAndSize
+           * Setting it to PyBytes_FromStringAndSize
+           */
+        valobj = PyBytes_FromStringAndSize( (const char *) value, cbValue);
       } else {
         valobj = DecodeString (ti, value, cbValue);
       }
@@ -677,7 +698,12 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_SET:
     case MFTYPE_DECIMAL:
       // Fall through for string encoding
-      valobj = PyString_FromStringAndSize( (const char *) value, cbValue);
+      /*
+       * INVESTIGATE:
+       * Previous was PyString_FromStringAndSize
+       * Setting it to PyBytes_FromStringAndSize
+       */
+      valobj = PyBytes_FromStringAndSize( (const char *) value, cbValue);
       break;
 
     }
@@ -1169,7 +1195,12 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 END_PARSE:
   Py_DECREF(iterator);
 
-  retobj = PyString_FromStringAndSize (obuffer, (optr - obuffer));
+  /*
+   * INVESTIGATE:
+   * Previous was PyString_FromStringAndSize
+   * Setting it to PyBytes_FromStringAndSize
+   */
+  retobj = PyBytes_FromStringAndSize (obuffer, (optr - obuffer));
 
   if (heap)
   {

@@ -82,8 +82,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define alloca _alloca
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)		
-#define PRINTMARK() 		
+//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
+#define PRINTMARK()
 
 void *API_getSocket()
 {
@@ -167,7 +167,7 @@ int API_setTimeout(void *sock, int timeoutSec)
   Py_DECREF(retobj);
   return 1;
 
-}   
+}
 
 void API_closeSocket(void *sock)
 {
@@ -249,7 +249,15 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
   int ret;
 
   funcStr = PyString_FromString("send");
-  pybuffer = PyString_FromStringAndSize(buffer, cbBuffer);
+
+  /*
+   * Converting const char * buffer to Python Bytes because
+   * The code below calls the method "send" of the object of type "socket"
+   * https://docs.python.org/3/library/socket.html#socket.socket.send
+   * The method sends the "bytes" over the socket hence converting the
+   * const char * received into PyBytes
+  */
+  pybuffer = PyBytes_FromStringAndSize(buffer, cbBuffer);
   res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, pybuffer, NULL);
   Py_DECREF(funcStr);
   Py_DECREF(pybuffer);
@@ -263,4 +271,3 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
   Py_DECREF(res);
   return ret;
 }
-
