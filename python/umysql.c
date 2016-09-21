@@ -1453,6 +1453,18 @@ static PyMethodDef methods[] = {
   {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "umysql",     /* m_name */
+    "This is Python3 compatible umysql porting",  /* m_doc */
+    -1,                  /* m_size */
+    methods,    /* m_methods */
+    NULL,                /* m_reload */
+    NULL,                /* m_traverse */
+    NULL,                /* m_clear */
+    NULL,                /* m_free */
+ };
+
 PyMODINIT_FUNC
   initumysql(void)
 {
@@ -1460,7 +1472,7 @@ PyMODINIT_FUNC
   PyObject *dict;
   PyDateTime_IMPORT;
 
-  m = Py_InitModule3("umysql", methods, "");
+  m = PyModule_Create(&moduledef);
   if (m == NULL)
     return NULL;
 
