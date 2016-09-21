@@ -756,13 +756,13 @@ class TestMySQL(unittest.TestCase):
 
         rs = cnn.query("select test_text from tblutf8mb4;")
         result = rs.rows
-        self.assertNotEquals(result[0][0], utf8mb4chr)
+        self.assertNotEqual(result[0][0], utf8mb4chr)
         self.assertEqual(result[1][0], utf8mb4chr)
 
         cnn.query("set names utf8")
         rs = cnn.query("select test_text from tblutf8mb4;")
         result = rs.rows
-        self.assertNotEquals(result[1][0], utf8mb4chr)
+        self.assertNotEqual(result[1][0], utf8mb4chr)
 
         cnn.close()
 
