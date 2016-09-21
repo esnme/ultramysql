@@ -1394,8 +1394,7 @@ static PyMemberDef Connection_members[] = {
 
 
 static PyTypeObject ConnectionType = {
-  PyObject_HEAD_INIT(NULL)
-  0,				/* ob_size        */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "umysql.Connection",		/* tp_name        */
   sizeof(Connection),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
@@ -1490,8 +1489,7 @@ static PyMemberDef ResultSet_members[] = {
 };
 
 static PyTypeObject ResultSetType = {
-  PyObject_HEAD_INIT(NULL)
-  0,				/* ob_size        */
+  PyVarObject_HEAD_INIT(NULL, 0)
   "umysql.ResultSet",		/* tp_name        */
   sizeof(ResultSet),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
