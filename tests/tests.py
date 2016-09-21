@@ -71,8 +71,8 @@ import umysql
 
 DB_HOST = 'localhost'
 DB_PORT = 3306
-DB_USER = 'test'
-DB_PASSWD = 'test'
+DB_USER = 'root'
+DB_PASSWD = ''
 DB_DB = 'test'
 
 class TestMySQL(unittest.TestCase):
@@ -90,19 +90,18 @@ class TestMySQL(unittest.TestCase):
 
     def testConnectWithWrongDB(self):
         cnn = umysql.Connection()
-
         try:
             cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "DBNOTFOUND")
         except umysql.SQLError as e:
             # 1049 = ER_BAD_DB_ERROR
-            self.assertEqual(e[0], 1049)
+            self.assertEqual(e.args[0], 1049)
 
     def testConnectWrongCredentials(self):
         cnn = umysql.Connection()
         try:
             cnn.connect (DB_HOST, 3306, "UserNotFound", "PasswordYeah", DB_DB)
         except umysql.SQLError as e:
-            self.assertEqual(e[0], 1045)
+            self.assertEqual(e.args[0], 1045)
 
     def testUnique(self):
         cnn = umysql.Connection()
