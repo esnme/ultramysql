@@ -61,6 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import with_statement
 
 import time
+import gevent
 import datetime
 import logging
 import unittest
@@ -68,11 +69,11 @@ import socket
 
 import umysql
 
-DB_HOST = '127.0.0.1'
+DB_HOST = 'localhost'
 DB_PORT = 3306
-DB_USER = 'gevent_test'
-DB_PASSWD = 'gevent_test'
-DB_DB = 'gevent_test'
+DB_USER = 'test'
+DB_PASSWD = 'test'
+DB_DB = 'test'
 
 class TestMySQL(unittest.TestCase):
     log = logging.getLogger('TestMySQL')
@@ -82,7 +83,7 @@ class TestMySQL(unittest.TestCase):
             a.b = umysql.Connection()
         except NameError:
             pass
-    
+
     def testConnectWithNoDB(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "")
@@ -92,17 +93,17 @@ class TestMySQL(unittest.TestCase):
 
         try:
             cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "DBNOTFOUND")
-        except umysql.SQLError, e:
+        except umysql.SQLError as e:
             # 1049 = ER_BAD_DB_ERROR
-            self.assertEquals(e[0], 1049)
-   
+            self.assertEqual(e[0], 1049)
+
     def testConnectWrongCredentials(self):
         cnn = umysql.Connection()
         try:
             cnn.connect (DB_HOST, 3306, "UserNotFound", "PasswordYeah", DB_DB)
-        except umysql.SQLError, e:
-            self.assertEquals(e[0], 1045)
-    
+        except umysql.SQLError as e:
+            self.assertEqual(e[0], 1045)
+
     def testUnique(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -114,11 +115,11 @@ class TestMySQL(unittest.TestCase):
         cnn.query("insert into tblunique set name=\"kaka\"")
 
         count = 0
-        
+
         try:
             cnn.query("insert into tblunique set name=\"kaka\"")
             self.fail('expected timeout')
-        except umysql.SQLError, e:
+        except umysql.SQLError as e:
             pass
         cnn.query("select * from tblunique")
         cnn.close()
@@ -131,11 +132,11 @@ class TestMySQL(unittest.TestCase):
         time.sleep(1)
         cnn = umysql.Connection()
         cnn.connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWD, DB_DB)
- 
+
     def testConnectTimeout(self):
         cnn = umysql.Connection()
         cnn.settimeout(1)
-        
+
         start = time.clock()
         try:
             cnn.connect (DB_HOST, 31481, DB_USER, DB_PASSWD, DB_DB)
@@ -145,11 +146,11 @@ class TestMySQL(unittest.TestCase):
 
             if (elapsed > 2):
                 assert False, "Timeout isn't working"
-        
+
         try:
             res = cnn.query("select * from kaka");
             assert False, "Expected exception"
-        except(socket.error):    
+        except(socket.error):
             pass
         cnn.close()
 
@@ -172,13 +173,8 @@ class TestMySQL(unittest.TestCase):
         except(socket.error):
             pass
         cnn.close()
-      
- 
 
-        
-
-    """
-   def testConcurrentQueryError(self):
+    def testConcurrentQueryError(self):
         connection = umysql.Connection()
         connection.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
         errorCount = [ 0 ]
@@ -194,10 +190,10 @@ class TestMySQL(unittest.TestCase):
         ch2 = gevent.spawn(query, connection)
         ch3 = gevent.spawn(query, connection)
         gevent.joinall([ch1, ch2, ch3])
-        
+
         self.assertTrue(errorCount[0] > 0)
         connection.close()
- 
+
     def testConcurrentConnectError(self):
         connection = umysql.Connection()
         errorCount = [ 0 ]
@@ -213,7 +209,7 @@ class TestMySQL(unittest.TestCase):
         ch2 = gevent.spawn(query, connection)
         ch3 = gevent.spawn(query, connection)
         gevent.joinall([ch1, ch2, ch3])
-        
+
         self.assertTrue(errorCount[0] > 0)
         connection.close()
 
@@ -254,8 +250,7 @@ class TestMySQL(unittest.TestCase):
 
         end = time.time()
         self.assertAlmostEqual(3.0, end - start, places = 0)
-    """
-        
+
     def testConnectTwice(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -266,29 +261,29 @@ class TestMySQL(unittest.TestCase):
             pass
         pass
         cnn.close()
-            
+
     def testConnectClosed(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-        self.assertEquals(True, cnn.is_connected())
+        self.assertEqual(True, cnn.is_connected())
         cnn.close()
-        self.assertEquals(False, cnn.is_connected())
+        self.assertEqual(False, cnn.is_connected())
 
     def testConnectCloseQuery(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-        self.assertEquals(True, cnn.is_connected())
+        self.assertEqual(True, cnn.is_connected())
         cnn.close()
-        self.assertEquals(False, cnn.is_connected())
-        
+        self.assertEqual(False, cnn.is_connected())
+
         try:
             cnn.query("SELECT 1")
             assert False, "Expected exception"
         except(RuntimeError):
             pass
         cnn.close()
-        
-        
+
+
     def testMySQLClient(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -305,7 +300,7 @@ class TestMySQL(unittest.TestCase):
 
         self.assertEqual([(1,)], rs.rows)
         cnn.close()
-    
+
     def testConnectAutoCommitOff(self):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, "", False)
@@ -322,7 +317,7 @@ class TestMySQL(unittest.TestCase):
         cnn.query("truncate tbltest")
 
         for i in range(10):
-            self.assertEquals((1, 0), cnn.query("insert into tbltest (test_id, test_string) values (%d, 'test%d')" % (i, i)))
+            self.assertEqual((1, 0), cnn.query("insert into tbltest (test_id, test_string) values (%d, 'test%d')" % (i, i)))
 
         rs = cnn.query("select test_id, test_string from tbltest")
 
@@ -330,7 +325,7 @@ class TestMySQL(unittest.TestCase):
         #the result from the database otherwise connection would be in wrong stat
 
         for i, row in enumerate(rs.rows):
-            self.assertEquals((i, 'test%d' % i), row)
+            self.assertEqual((i, 'test%d' % i), row)
 
         cnn.close()
 
@@ -350,7 +345,7 @@ class TestMySQL(unittest.TestCase):
                 cntj = 0
                 for j in xrange(10000):
                     cntj += 1
-                    self.assertEquals((1, 0), cnn.query('''INSERT INTO tbltestmanyinserts
+                    self.assertEqual((1, 0), cnn.query('''INSERT INTO tbltestmanyinserts
                                                         VALUES (%d, %d, %s)''' %
                                                         (i, j, 0.000012345)))
                     #cnn.query("INSERT INTO tbltestmanyinserts VALUES (%d, %d, %s)" %
@@ -361,7 +356,7 @@ class TestMySQL(unittest.TestCase):
         finally:
             print datetime.datetime.now(),'\tcnti =',cnti,'\tcntj =',cntj
             cnn.close()
-    """	    
+    """
 
     def testMySQLDBAPI(self):
 
@@ -375,18 +370,18 @@ class TestMySQL(unittest.TestCase):
 
         rs = cnn.query("select test_id, test_string from tbltest")
 
-        self.assertEquals((0, 'test0'), rs.rows[0])
+        self.assertEqual((0, 'test0'), rs.rows[0])
 
         #check that fetchall gets the remainder
-        self.assertEquals([(1, 'test1'), (2, 'test2'), (3, 'test3'), (4, 'test4'), (5, 'test5'), (6, 'test6'), (7, 'test7'), (8, 'test8'), (9, 'test9')], rs.rows[1:])
+        self.assertEqual([(1, 'test1'), (2, 'test2'), (3, 'test3'), (4, 'test4'), (5, 'test5'), (6, 'test6'), (7, 'test7'), (8, 'test8'), (9, 'test9')], rs.rows[1:])
 
         #another query on the same cursor should work
         rs = cnn.query("select test_id, test_string from tbltest")
 
         #fetch some but not all
-        self.assertEquals((0, 'test0'), rs.rows[0])
-        self.assertEquals((1, 'test1'), rs.rows[1])
-        self.assertEquals((2, 'test2'), rs.rows[2])
+        self.assertEqual((0, 'test0'), rs.rows[0])
+        self.assertEqual((1, 'test1'), rs.rows[1])
+        self.assertEqual((2, 'test2'), rs.rows[2])
 
         #this should not work, cursor was closed
         cnn.close()
@@ -406,15 +401,15 @@ class TestMySQL(unittest.TestCase):
 
         rs = cnn.query("select test_id, test_blob from tbltest")
         for row in rs.rows:
-            self.assertEquals(row[0], len(row[1]))
-            #self.assertEquals(blob[:row[0]], row[1])
+            self.assertEqual(row[0], len(row[1]))
+            #self.assertEqual(blob[:row[0]], row[1])
 
         #reread, second time, oversize packet is already present
         rs = cnn.query("select test_id, test_blob from tbltest")
         for row in rs.rows:
-            self.assertEquals(row[0], len(row[1]))
-            self.assertEquals(blob[:row[0]], row[1])
-                        
+            self.assertEqual(row[0], len(row[1]))
+            self.assertEqual(blob[:row[0]], row[1])
+
         cnn.close()
 
         #have a very low max packet size for oversize packets
@@ -425,37 +420,37 @@ class TestMySQL(unittest.TestCase):
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
 
         cnn.query("truncate tbltest")
-  
+
         cnn.query("insert into tbltest (test_id, test_string) values (%s, %s)", (1, 'piet'))
         cnn.query("insert into tbltest (test_id, test_string) values (%s, %s)", (2, 'klaas'))
         cnn.query("insert into tbltest (test_id, test_string) values (%s, %s)", (3, "pi'et"))
 
         #classic sql injection, would return all rows if no proper escaping is done
         rs = cnn.query("select test_id, test_string from tbltest where test_string = %s", ("piet' OR 'a' = 'a",))
-        self.assertEquals([], rs.rows) #assert no rows are found
+        self.assertEqual([], rs.rows) #assert no rows are found
 
         #but we should still be able to find the piet with the apostrophe in its name
         rs = cnn.query("select test_id, test_string from tbltest where test_string = %s", ("pi'et",))
-        self.assertEquals([(3, "pi'et")], rs.rows)
-  
+        self.assertEqual([(3, "pi'et")], rs.rows)
+
         #also we should be able to insert and retrieve blob/string with all possible bytes transparently
         chars = ''.join([chr(i) for i in range(256)])
 
-    
+
         cnn.query("insert into tbltest (test_id, test_string, test_blob) values (%s, %s, %s)", (4, chars[:80], chars))
         #cnn.query("insert into tbltest (test_id, test_blob) values (%s, %s)", (4, chars))
 
         rs = cnn.query("select test_blob, test_string from tbltest where test_id = %s", (4,))
-        #self.assertEquals([(chars, chars)], cur.fetchall())
+        #self.assertEqual([(chars, chars)], cur.fetchall())
         b, s = rs.rows[0]
- 
-        #test blob
-        self.assertEquals(256, len(b))
-        self.assertEquals(chars, b)
 
-        self.assertEquals(80, len(s))
-        self.assertEquals(chars[:80], s)        
-        
+        #test blob
+        self.assertEqual(256, len(b))
+        self.assertEqual(chars, b)
+
+        self.assertEqual(80, len(s))
+        self.assertEqual(chars[:80], s)
+
         cnn.close()
 
     def testSelectUnicode(self):
@@ -472,7 +467,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_id, test_string from tbltest")
 
         result = rs.rows
-        self.assertEquals([(1, u'piet'), (2, s), (3, s)], result)
+        self.assertEqual([(1, u'piet'), (2, s), (3, s)], result)
 
         #test that we can still cleanly roundtrip a blob, (it should not be encoded if we pass
         #it as 'str' argument), eventhough we pass the qry itself as unicode
@@ -481,9 +476,9 @@ class TestMySQL(unittest.TestCase):
         cnn.query(u"insert into tbltest (test_id, test_blob) values (%s, %s)", (4, blob))
         rs = cnn.query("select test_blob from tbltest where test_id = %s", (4,))
         b2 = rs.rows[0][0]
-        self.assertEquals(str, type(b2))
-        self.assertEquals(256, len(b2))
-        self.assertEquals(blob, b2)
+        self.assertEqual(str, type(b2))
+        self.assertEqual(256, len(b2))
+        self.assertEqual(blob, b2)
         cnn.close()
 
     def testAutoInc(self):
@@ -546,18 +541,18 @@ class TestMySQL(unittest.TestCase):
         # Make sure both our inserts where correct (ie, the big number was not truncated/modified on insert)
         rs = cnn.query("select test_id from tblbigint where test_bigint = test_bigint2")
         result = rs.rows
-        self.assertEquals([(1, ), (2, )], result)
+        self.assertEqual([(1, ), (2, )], result)
 
         # Make sure select gets the right values (ie, the big number was not truncated/modified when retrieved)
         rs = cnn.query("select test_id, test_bigint, test_bigint2 from tblbigint where test_bigint = test_bigint2")
         result = rs.rows
-        self.assertEquals([(1, BIGNUM, BIGNUM), (2, BIGNUM, BIGNUM)], result)
+        self.assertEqual([(1, BIGNUM, BIGNUM), (2, BIGNUM, BIGNUM)], result)
         cnn.close()
 
     def testDate(self):
         # Tests the behaviour of insert/select with mysql/DATE <-> python/datetime.date
 
-        d_date = datetime.date(2010, 02, 11)
+        d_date = datetime.date(2010, 2, 11)
         d_string = "2010-02-11"
 
         cnn = umysql.Connection()
@@ -571,18 +566,18 @@ class TestMySQL(unittest.TestCase):
         # Make sure our insert was correct
         rs = cnn.query("select test_id from tbldate where test_date = test_date2")
         result = rs.rows
-        self.assertEquals([(1, )], result)
+        self.assertEqual([(1, )], result)
 
         # Make sure select gets the right value back
         rs = cnn.query("select test_id, test_date, test_date2 from tbldate where test_date = test_date2")
         result = rs.rows
-        self.assertEquals([(1, d_date, d_date)], result)
+        self.assertEqual([(1, d_date, d_date)], result)
         cnn.close()
 
     def testDateTime(self):
         # Tests the behaviour of insert/select with mysql/DATETIME <-> python/datetime.datetime
 
-        d_date = datetime.datetime(2010, 02, 11, 13, 37, 42)
+        d_date = datetime.datetime(2010, 2, 11, 13, 37, 42)
         d_string = "2010-02-11 13:37:42"
 
         cnn = umysql.Connection()
@@ -597,17 +592,17 @@ class TestMySQL(unittest.TestCase):
         # Make sure our insert was correct
         rs = cnn.query("select test_id from tbldate where test_date = test_date2")
         result = rs.rows
-        self.assertEquals([(1, )], result)
+        self.assertEqual([(1, )], result)
 
         # Make sure select gets the right value back
         rs = cnn.query("select test_id, test_date, test_date2 from tbldate where test_date = test_date2")
         result = rs.rows
-        self.assertEquals([(1, d_date, d_date)], result)
+        self.assertEqual([(1, d_date, d_date)], result)
         cnn.close()
 
     def testZeroDates(self):
         # Tests the behaviour of zero dates
-        zero_datetime = "0000-00-00 00:00:00" 
+        zero_datetime = "0000-00-00 00:00:00"
         zero_date = "0000-00-00"
 
         cnn = umysql.Connection()
@@ -621,7 +616,7 @@ class TestMySQL(unittest.TestCase):
         # Make sure we get None-values back
         rs = cnn.query("select test_id, test_date, test_datetime from tbldate where test_id = 1")
         result = rs.rows
-        self.assertEquals([(1, None, None)], result)
+        self.assertEqual([(1, None, None)], result)
         cnn.close()
 
     def testUnicodeUTF8(self):
@@ -641,7 +636,7 @@ class TestMySQL(unittest.TestCase):
         result = rs.rows
 
         # We expect unicode strings back
-        self.assertEquals([(1, peacesign_unicode), (2, peacesign_unicode)], result)
+        self.assertEqual([(1, peacesign_unicode), (2, peacesign_unicode)], result)
         cnn.close()
 
     def testBinary(self):
@@ -661,10 +656,10 @@ class TestMySQL(unittest.TestCase):
         result = rs.rows
 
         # We expect binary strings back
-        self.assertEquals([(1, peacesign_binary),(2, peacesign_binary2)], result)
+        self.assertEqual([(1, peacesign_binary),(2, peacesign_binary2)], result)
         cnn.close()
 
-    
+
     def testBlob(self):
         peacesign_binary = "\xe2\x98\xae"
         peacesign_binary2 = "\xe2\x98\xae" * 1024
@@ -682,7 +677,7 @@ class TestMySQL(unittest.TestCase):
         result = rs.rows
 
         # We expect binary strings back
-        self.assertEquals([(1, peacesign_binary),(2, peacesign_binary2)], result)    
+        self.assertEqual([(1, peacesign_binary),(2, peacesign_binary2)], result)
         cnn.close()
 
     def testCharsets(self):
@@ -699,7 +694,7 @@ class TestMySQL(unittest.TestCase):
         # We insert the same character using two different encodings
         cnn.query("set names utf8")
         cnn.query("insert into tblutf (test_mode, test_utf, test_latin1) values ('utf8', _utf8'" + aumlaut_utf8 + "', _latin1'" + aumlaut_latin1 + "')")
-        
+
         cnn.query("set names latin1")
         cnn.query("insert into tblutf (test_mode, test_utf, test_latin1) values ('latin1', _utf8'" + aumlaut_utf8 + "', _latin1'" + aumlaut_latin1 + "')")
 
@@ -711,7 +706,7 @@ class TestMySQL(unittest.TestCase):
             cnn.query("set names " + charset)
             rs = cnn.query("select test_mode, test_utf, test_latin1 from tblutf")
             result = rs.rows
-            self.assertEquals(result, expected)
+            self.assertEqual(result, expected)
 
         cnn.close()
 
@@ -729,7 +724,7 @@ class TestMySQL(unittest.TestCase):
         # We insert the same character using two different encodings
         cnn.query("set names utf8")
         cnn.query("insert into tblutf (test_mode, test_utf, test_latin1) values ('utf8', _utf8'" + aumlaut_utf8 + "', _latin1'" + aumlaut_latin1 + "')")
-        
+
         cnn.query("set names latin1")
         cnn.query("insert into tblutf (test_mode, test_utf, test_latin1) values ('latin1', _utf8'" + aumlaut_utf8 + "', _latin1'" + aumlaut_latin1 + "')")
 
@@ -741,7 +736,7 @@ class TestMySQL(unittest.TestCase):
             cnn.query("set names " + charset)
             rs = cnn.query("select test_mode, test_utf, test_latin1 from tblutf")
             result = rs.rows
-            self.assertEquals(result, expected)
+            self.assertEqual(result, expected)
 
         cnn.close()
 
@@ -762,7 +757,7 @@ class TestMySQL(unittest.TestCase):
         rs = cnn.query("select test_text from tblutf8mb4;")
         result = rs.rows
         self.assertNotEquals(result[0][0], utf8mb4chr)
-        self.assertEquals(result[1][0], utf8mb4chr)
+        self.assertEqual(result[1][0], utf8mb4chr)
 
         cnn.query("set names utf8")
         rs = cnn.query("select test_text from tblutf8mb4;")
@@ -775,14 +770,14 @@ class TestMySQL(unittest.TestCase):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
         rs = cnn.query("SELECT * FROM `tblautoincint` WHERE `test_id` LIKE '%%10%%'")
-        self.assertEquals([(100, u'piet'), (101, u'piet')], rs.rows)
+        self.assertEqual([(100, u'piet'), (101, u'piet')], rs.rows)
 
         rs = cnn.query("SELECT * FROM `tblautoincint` WHERE `test_id` LIKE '%%%s%%'", [10])
-        self.assertEquals([(100, u'piet'), (101, u'piet')], rs.rows)
+        self.assertEqual([(100, u'piet'), (101, u'piet')], rs.rows)
 
         # SqlAlchemy query style
         rs = cnn.query("SELECT * FROM `tblautoincint` WHERE `test_id` LIKE concat(concat('%%', %s), '%%')", [10])
-        self.assertEquals([(100, u'piet'), (101, 'piet')], rs.rows)
+        self.assertEqual([(100, u'piet'), (101, 'piet')], rs.rows)
 
         cnn.close()
 
@@ -814,9 +809,9 @@ class TestMySQL(unittest.TestCase):
             `short` SMALLINT UNSIGNED NOT NULL,
             `tiny` TINYINT UNSIGNED NOT NULL
         )''')
-        values1 = (0xffffffffffffffffL, 0xffffffff, 0xffffff, 0xffff, 0xff, )
-        values2 = (0x8000000000000000L, 0x80000000, 0x800000, 0x8000, 0x80, )
-        values3 = (0x8fedcba098765432L, 0x8fedcba0, 0x8fedcb, 0x8fed, 0x8f, )
+        values1 = (0xffffffffffffffff, 0xffffffff, 0xffffff, 0xffff, 0xff, )
+        values2 = (0x8000000000000000, 0x80000000, 0x800000, 0x8000, 0x80, )
+        values3 = (0x8fedcba098765432, 0x8fedcba0, 0x8fedcb, 0x8fed, 0x8f, )
         rc, rid = cnn.query('INSERT INTO `tblunsignedint` VALUES(%s, %s, %s, %s, %s)', values1)
         self.assertEqual(rc, 1)
         rc, rid = cnn.query('INSERT INTO `tblunsignedint` VALUES(%s, %s, %s, %s, %s)', values2)
@@ -824,14 +819,8 @@ class TestMySQL(unittest.TestCase):
         rc, rid = cnn.query('INSERT INTO `tblunsignedint` VALUES(%s, %s, %s, %s, %s)', values3)
         self.assertEqual(rc, 1)
         rs = cnn.query('SELECT * FROM `tblunsignedint`')
-        self.assertEquals([values1, values2, values3, ], rs.rows)
+        self.assertEqual([values1, values2, values3, ], rs.rows)
         cnn.close()
 
 if __name__ == '__main__':
-    from guppy import hpy
-    hp = hpy()
-    hp.setrelheap()
-    while True:
-        unittest.main()
-        heap = hp.heapu()
-        print heap
+    unittest.main()
