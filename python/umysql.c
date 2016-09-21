@@ -153,7 +153,7 @@ void API_resultSetField(void *result, int column, UMTypeInfo *ti, void *_name, s
    * Setting it to PyUnicode_FromStringAndSize
    */
   PyTuple_SET_ITEM(field, 0, PyUnicode_FromStringAndSize((const char *)_name, _cbName));
-  PyTuple_SET_ITEM(field, 1, PyInt_FromLong(ti->type));
+  PyTuple_SET_ITEM(field, 1, PyLong_FromLong(ti->type));
   PyTuple_SET_ITEM(((ResultSet *) result)->fields, column, field);
   PRINTMARK();
   return;
@@ -564,7 +564,7 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_SHORT:
     case MFTYPE_INT24:
       {
-        valobj = PyInt_FromLong(parseINT32 (value, ((char *) value) + cbValue));
+        valobj = PyLong_FromLong(parseINT32 (value, ((char *) value) + cbValue));
         break;
       }
 
@@ -1008,15 +1008,30 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
   FIXME: Surround strings with '' could be performed in this function to avoid extra logic in AppendAndEscapeString */
   PRINTMARK();
 
-  if (PyString_Check(obj))
+  /*
+   * DEBUG: Checking if the PyObject * obj is a bytes object.
+   */
+  printf("In method AppendEscapedArg, obj is bytes = %d\n", PyBytes_Check(obj));
+
+  if (PyBytes_Check(obj))
   {
     PRINTMARK();
-    return AppendAndEscapeString(start, end, PyString_AS_STRING(obj), PyString_AS_STRING(obj) + PyString_GET_SIZE(obj), TRUE);
+    /*
+     * Since method AppendAndEscapeString accepts a char * and
+     * obj belongs to bytes. So Changing PyString_AS_STRING to
+     * PyBytes_AS_STRING
+     */
+    return AppendAndEscapeString(start, end, PyBytes_AS_STRING(obj), PyBytes_AS_STRING(obj) + PyBytes_GET_SIZE(obj), TRUE);
   }
   else
     if (PyUnicode_Check(obj))
     {
       PRINTMARK();
+
+      /*
+       * If the obj is a unicode object then converting it to char * with
+       * appropriate decoder passed as a function pointer.
+       */
       strobj = self->PFN_PyUnicode_Encode(PyUnicode_AS_UNICODE(obj), PyUnicode_GET_SIZE(obj), NULL);
 
       if (strobj == NULL)
@@ -1030,8 +1045,12 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
         return -1;
       }
 
-
-      ret = AppendAndEscapeString(start, end, PyString_AS_STRING(strobj), PyString_AS_STRING(strobj) + PyString_GET_SIZE(strobj), TRUE);
+      /*
+       * Since method AppendAndEscapeString accepts a char * and
+       * strobj belongs to bytes. So Changing PyString_AS_STRING to
+       * PyBytes_AS_STRING
+       */
+      ret = AppendAndEscapeString(start, end, PyBytes_AS_STRING(strobj), PyBytes_AS_STRING(strobj) + PyBytes_GET_SIZE(strobj), TRUE);
       Py_DECREF(strobj);
 
       return ret;
@@ -1071,8 +1090,20 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
 
           //FIXME: Might possible to avoid this?
           PRINTMARK();
-          strobj = PyObject_Str(obj);
-          ret = AppendAndEscapeString(start, end, PyString_AS_STRING(strobj), PyString_AS_STRING(strobj) + PyString_GET_SIZE(strobj), FALSE);
+
+          /*
+           * This method gives the string representation of the python object.
+           * Previous: PyObject_Str
+           * Changed to: PyObject_Bytes
+           */
+          strobj = PyObject_Bytes(obj);
+
+          /*
+           * Since method AppendAndEscapeString accepts a char * and
+           * strobj belongs to bytes. So Changing PyString_AS_STRING to
+           * PyBytes_AS_STRING
+           */
+          ret = AppendAndEscapeString(start, end, PyBytes_AS_STRING(strobj), PyBytes_AS_STRING(strobj) + PyBytes_GET_SIZE(strobj), FALSE);
           Py_DECREF(strobj);
           return ret;
 }
@@ -1129,7 +1160,12 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
 
   optr = obuffer;
-  iptr = PyString_AS_STRING(inQuery);
+
+  /*
+   * inQuery is already bytes so converting it to char * using
+   * PyBytes_AS_STRING
+   */
+  iptr = PyBytes_AS_STRING(inQuery);
 
   hasArg = 0;
 
@@ -1292,7 +1328,11 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     escapedQuery = query;
   }
 
-  ret =  UMConnection_Query(self->conn, PyString_AS_STRING(escapedQuery), PyString_GET_SIZE(escapedQuery));
+  /*
+   * escapedQueryis already PyBytes. So changing PyString_AS_STRING to
+   * PyBytes_AS_STRING
+   */
+  ret =  UMConnection_Query(self->conn, PyBytes_AS_STRING(escapedQuery), PyBytes_GET_SIZE(escapedQuery));
 
   Py_DECREF(escapedQuery);
 

@@ -151,7 +151,11 @@ int API_setTimeout(void *sock, int timeoutSec)
   PRINTMARK();
   intobj = PyFloat_FromDouble( (double) timeoutSec);
 
-  methodObj = PyString_FromString("settimeout");
+  /*
+   * PyString_FromString is deprecated and the method settimeout on object
+   * socket expects unicode. so PyUnicode_FromString.
+   */
+  methodObj = PyUnicode_FromString("settimeout");
   PRINTMARK();
   retobj = PyObject_CallMethodObjArgs ((PyObject *) sock, methodObj, intobj, NULL);
   Py_DECREF(intobj);
@@ -196,10 +200,15 @@ int API_connectSocket(void *sock, const char *host, int port)
   PRINTMARK();
 
   addrTuple = PyTuple_New(2);
-  PyTuple_SET_ITEM(addrTuple, 0, PyString_FromString(host));
-  PyTuple_SET_ITEM(addrTuple, 1, PyInt_FromLong(port));
 
-  connectStr = PyString_FromString("connect");
+  /*
+   * PyString_FromString is deprecated and the method connect on object
+   * socket expects tuple having unicode. so PyUnicode_FromString.
+   */
+  PyTuple_SET_ITEM(addrTuple, 0, PyUnicode_FromString(host));
+  PyTuple_SET_ITEM(addrTuple, 1, PyLong_FromLong(port));
+
+  connectStr = PyUnicode_FromString("connect");
   res = PyObject_CallMethodObjArgs( (PyObject *) sock, connectStr, addrTuple, NULL);
 
   Py_DECREF(connectStr);
@@ -224,8 +233,12 @@ int API_recvSocket(void *sock, char *buffer, int cbBuffer)
   PyObject *funcStr;
   int ret;
 
-  funcStr = PyString_FromString("recv");
-  bufSize = PyInt_FromLong(cbBuffer);
+  funcStr = PyUnicode_FromString("recv");
+
+  /*
+   * PyInt_FromLong is deprecated in favour of PyLong_FromLong
+   */
+  bufSize = PyLong_FromLong(cbBuffer);
   res = PyObject_CallMethodObjArgs ((PyObject *) sock, funcStr, bufSize, NULL);
   Py_DECREF(funcStr);
   Py_DECREF(bufSize);
@@ -236,7 +249,15 @@ int API_recvSocket(void *sock, char *buffer, int cbBuffer)
   }
 
   ret = (int) PyString_GET_SIZE(res);
-  memcpy (buffer, PyString_AS_STRING(res), ret);
+
+  /*
+   * The data received from the socket is byte array.
+   * https://docs.python.org/3/library/socket.html#socket.socket.recv
+   * So PyObject * res ===> PyBytes
+   * So converting it to char * so that it can be copied safely into buffer
+   * https://docs.python.org/3.4/c-api/bytes.html#c.PyBytes_AsString
+  */
+  memcpy (buffer, PyBytes_AsString(res), ret);
   Py_DECREF(res);
   return ret;
 }
@@ -248,7 +269,7 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
   PyObject *funcStr;
   int ret;
 
-  funcStr = PyString_FromString("send");
+  funcStr = PyUnicode_FromString("send");
 
   /*
    * Converting const char * buffer to Python Bytes because
@@ -267,7 +288,7 @@ int API_sendSocket(void *sock, const char *buffer, int cbBuffer)
     return -1;
   }
 
-  ret = (int) PyInt_AsLong(res);
+  ret = (int) PyLong_AsLong(res);
   Py_DECREF(res);
   return ret;
 }
