@@ -1123,7 +1123,10 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
   // Estimate output length
 
-  cbOutQuery += PyString_GET_SIZE(inQuery);
+  /*
+   * Since inQuery is bytes object
+   */
+  cbOutQuery += PyBytes_GET_SIZE(inQuery);
 
   iterator = PyObject_GetIter(iterable);
 

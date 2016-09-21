@@ -248,7 +248,10 @@ int API_recvSocket(void *sock, char *buffer, int cbBuffer)
     return -1;
   }
 
-  ret = (int) PyString_GET_SIZE(res);
+  /*
+   * Since res is a bytes object
+   */
+  ret = (int) PyBytes_GET_SIZE(res);
 
   /*
    * The data received from the socket is byte array.
