@@ -1133,8 +1133,11 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
     cbOutQuery += 2;
 
     // Worst case escape and utf-8
-    if (PyString_Check(arg))
-      cbOutQuery += (PyString_GET_SIZE(arg) * 2);
+    /*
+     * Replacing PyString_Check with PyBytes_Check
+     */
+    if (PyBytes_Check(arg))
+      cbOutQuery += (PyBytes_GET_SIZE(arg) * 2);
     else
       if (PyUnicode_Check(arg))
         cbOutQuery += (PyUnicode_GET_SIZE(arg) * 6);
@@ -1279,7 +1282,10 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     Py_DECREF(iterator);
   }
 
-  if (!PyString_Check(inQuery))
+  /*
+   * Replacing PyString_Check with PyBytes_Check
+   */
+  if (!PyBytes_Check(inQuery))
   {
     if (!PyUnicode_Check(inQuery))
     {
