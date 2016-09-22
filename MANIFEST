@@ -9,3 +9,17 @@ setup.py
 ./lib/capi.cpp
 ./python/io_cpython.c
 ./python/umysql.c
+lib/Connection.cpp
+lib/Connection.h
+lib/PacketReader.cpp
+lib/PacketReader.h
+lib/PacketWriter.cpp
+lib/PacketWriter.h
+lib/SHA1.cpp
+lib/SHA1.h
+lib/capi.cpp
+lib/mysqldefs.h
+lib/socketdefs.h
+python/io_cpython.c
+python/umysql.c
+python/umysql.h
