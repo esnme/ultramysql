@@ -91,7 +91,7 @@ import logging
 import unittest
 import socket
 
-import umysql
+import umysql3 as umysql
 
 DB_HOST = 'localhost'
 DB_PORT = 3306

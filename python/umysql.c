@@ -1547,7 +1547,7 @@ static PyMethodDef methods[] = {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "umysql",     /* m_name */
+    "umysql3",     /* m_name */
     "This is Python3 compatible umysql porting",  /* m_doc */
     -1,                  /* m_size */
     methods,    /* m_methods */
@@ -1558,7 +1558,7 @@ static struct PyModuleDef moduledef = {
  };
 
 PyMODINIT_FUNC
-  PyInit_umysql(void)
+  PyInit_umysql3(void)
 {
   PyObject* m;
   PyObject *dict;

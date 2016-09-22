@@ -1,10 +1,25 @@
-:: Description ::
-A fast MySQL driver written in pure C/C++ for Python. 
-Compatible with gevent through monkey patching
+umysql3
+---------------------------
 
-:: Requirements ::
-Requires Python (http://www.python.org) 
+This is a fast MySQL Driver written in pure C/C++ for Python using
+Python 3 C API. The repository is a fork of
+[ultramysql](https://github.com/esnme/ultramysql) and is modified to
+support Python 3.
 
-:: Installation ::
-python setup.py build install
+## How to install
+```
+pip3.4 install umysql3
+```
 
+## Building .so file
+```
+rm *.so
+python setup.py build
+cp build/lib.linux-x86_64-2.7/* .
+```
+
+## Running tests
+```
+cd tests
+python -m unittest tests.TestMySQL
+```
