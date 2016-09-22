@@ -113,4 +113,3 @@ EXPORT_ATTR int UMConnection_Close (UMConnection conn)
 {
   return ((Connection *)conn)->close() ? 1 : 0;
 }
-

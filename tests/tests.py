@@ -319,7 +319,7 @@ class TestMySQL(unittest.TestCase):
         cnn.query("truncate tbltest")
 
         for i in range(10):
-            self.assertEqual((1, 0), cnn.query("insert into tbltest (test_id, test_string) values (%d, 'test%d')" % (i, i)))
+            self.assertEqual((1, 0), cnn.query("insert into tbltest (test_id, test_string) values (%d, 'test%d')", (i, i,)))
 
         rs = cnn.query("select test_id, test_string from tbltest")
 
@@ -369,7 +369,7 @@ class TestMySQL(unittest.TestCase):
         cnn.query("truncate tbltest")
 
         for i in range(10):
-            cnn.query("insert into tbltest (test_id, test_string) values (%d, 'test%d')" % (i, i))
+            cnn.query("insert into tbltest (test_id, test_string) values (%d, 'test%d')", (i, i,))
 
         rs = cnn.query("select test_id, test_string from tbltest")
 
@@ -398,7 +398,7 @@ class TestMySQL(unittest.TestCase):
 
         blob = '0123456789'
         while 1:
-            cnn.query("insert into tbltest (test_id, test_blob) values (%d, '%s')" % (len(blob), blob))
+            cnn.query("insert into tbltest (test_id, test_blob) values (%d, %s)", (len(blob), blob,))
             if len(blob) > (c * 2): break
             blob = blob * 2
 
@@ -439,11 +439,10 @@ class TestMySQL(unittest.TestCase):
         #also we should be able to insert and retrieve blob/string with all possible bytes transparently
         chars = ''.join([chr(i) for i in range(256)])
 
-
         cnn.query("insert into tbltest (test_id, test_string, test_blob) values (%s, %s, %s)", (4, chars[:80], chars))
         #cnn.query("insert into tbltest (test_id, test_blob) values (%s, %s)", (4, chars))
 
-        rs = cnn.query("select test_blob, test_string from tbltest where test_id = %s", (4,))
+        rs = cnn.query("select test_blob, test_string from tbltest where test_id = %s" % (4,))
         #self.assertEqual([(chars, chars)], cur.fetchall())
         b, s = rs.rows[0]
 
@@ -457,7 +456,7 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testSelectUnicode(self):
-        s = u'r\xc3\xa4ksm\xc3\xb6rg\xc3\xa5s'
+        s = 'r\xc3\xa4ksm\xc3\xb6rg\xc3\xa5s'
 
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -465,18 +464,19 @@ class TestMySQL(unittest.TestCase):
         cnn.query("truncate tbltest")
         cnn.query("insert into tbltest (test_id, test_string) values (%s, %s)", (1, 'piet'))
         cnn.query("insert into tbltest (test_id, test_string) values (%s, %s)", (2, s))
-        cnn.query(u"insert into tbltest (test_id, test_string) values (%s, %s)", (3, s))
+        cnn.query("insert into tbltest (test_id, test_string) values (%s, %s)", (3, s))
 
         rs = cnn.query("select test_id, test_string from tbltest")
 
         result = rs.rows
-        self.assertEqual([(1, u'piet'), (2, s), (3, s)], result)
+        self.assertEqual([(1, 'piet'), (2, s), (3, s)], result)
 
         #test that we can still cleanly roundtrip a blob, (it should not be encoded if we pass
         #it as 'str' argument), eventhough we pass the qry itself as unicode
+
         blob = ''.join([chr(i) for i in range(256)])
 
-        cnn.query(u"insert into tbltest (test_id, test_blob) values (%s, %s)", (4, blob))
+        cnn.query("insert into tbltest (test_id, test_blob) values (%s, %s)", (4, blob))
         rs = cnn.query("select test_blob from tbltest where test_id = %s", (4,))
         b2 = rs.rows[0][0]
         self.assertEqual(str, type(b2))
@@ -538,8 +538,8 @@ class TestMySQL(unittest.TestCase):
 
         cnn.query("drop table if exists tblbigint")
         cnn.query("create table tblbigint (test_id int(11) DEFAULT NULL, test_bigint bigint DEFAULT NULL, test_bigint2 bigint DEFAULT NULL) ENGINE=MyISAM DEFAULT CHARSET=latin1")
-        cnn.query("insert into tblbigint (test_id, test_bigint, test_bigint2) values (%s, " + str(BIGNUM) + ", %s)", (1, BIGNUM))
-        cnn.query(u"insert into tblbigint (test_id, test_bigint, test_bigint2) values (%s, " + str(BIGNUM) + ", %s)", (2, BIGNUM))
+        cnn.query("insert into tblbigint (test_id, test_bigint, test_bigint2) values (%s, %s, %s)" % (1, str(BIGNUM), BIGNUM))
+        cnn.query("insert into tblbigint (test_id, test_bigint, test_bigint2) values (%s, %s, %s)" % (2, str(BIGNUM), BIGNUM))
 
         # Make sure both our inserts where correct (ie, the big number was not truncated/modified on insert)
         rs = cnn.query("select test_id from tblbigint where test_bigint = test_bigint2")
@@ -564,7 +564,7 @@ class TestMySQL(unittest.TestCase):
         cnn.query("drop table if exists tbldate")
         cnn.query("create table tbldate (test_id int(11) DEFAULT NULL, test_date date DEFAULT NULL, test_date2 date DEFAULT NULL) ENGINE=MyISAM DEFAULT CHARSET=latin1")
 
-        cnn.query("insert into tbldate (test_id, test_date, test_date2) values (%s, '" + d_string + "', %s)", (1, d_date))
+        cnn.query("insert into tbldate (test_id, test_date, test_date2) values (%s, '%s', '%s')" % (1, d_string, d_date))
 
         # Make sure our insert was correct
         rs = cnn.query("select test_id from tbldate where test_date = test_date2")
@@ -590,7 +590,7 @@ class TestMySQL(unittest.TestCase):
         cnn.query("drop table if exists tbldate")
         cnn.query("create table tbldate (test_id int(11) DEFAULT NULL, test_date datetime DEFAULT NULL, test_date2 datetime DEFAULT NULL) ENGINE=MyISAM DEFAULT CHARSET=latin1")
 
-        cnn.query("insert into tbldate (test_id, test_date, test_date2) values (%s, '" + d_string + "', %s)", (1, d_date))
+        cnn.query("insert into tbldate (test_id, test_date, test_date2) values (%s, '%s', '%s')" % (1, d_string, d_date))
 
         # Make sure our insert was correct
         rs = cnn.query("select test_id from tbldate where test_date = test_date2")
@@ -614,7 +614,7 @@ class TestMySQL(unittest.TestCase):
         cnn.query("drop table if exists tbldate")
         cnn.query("create table tbldate (test_id int(11) DEFAULT NULL, test_date date DEFAULT NULL, test_datetime datetime DEFAULT NULL) ENGINE=MyISAM DEFAULT CHARSET=latin1")
 
-        cnn.query("insert into tbldate (test_id, test_date, test_datetime) values (%s, %s, %s)", (1, zero_date, zero_datetime))
+        cnn.query("insert into tbldate (test_id, test_date, test_datetime) values (%s, '%s', '%s')" % (1, zero_date, zero_datetime))
 
         # Make sure we get None-values back
         rs = cnn.query("select test_id, test_date, test_datetime from tbldate where test_id = 1")
@@ -623,8 +623,8 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testUnicodeUTF8(self):
-        peacesign_unicode = u"\u262e"
-        peacesign_utf8 = "\xe2\x98\xae"
+        peacesign_unicode = '\u262e'
+        peacesign_utf8 = b'\xe2\x98\xae'
 
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -632,8 +632,8 @@ class TestMySQL(unittest.TestCase):
         cnn.query("drop table if exists tblutf")
         cnn.query("create table tblutf (test_id int(11) DEFAULT NULL, test_string VARCHAR(32) DEFAULT NULL) ENGINE=MyISAM DEFAULT CHARSET=utf8")
 
-        cnn.query("insert into tblutf (test_id, test_string) values (%s, %s)", (1, peacesign_unicode)) # This should be encoded in utf8
-        cnn.query("insert into tblutf (test_id, test_string) values (%s, %s)", (2, peacesign_utf8))
+        cnn.query("insert into tblutf (test_id, test_string) values (%s, %s)", (1, peacesign_unicode,)) # This should be encoded in utf8
+        cnn.query("insert into tblutf (test_id, test_string) values (%s, %s)", (2, peacesign_utf8,))
 
         rs = cnn.query("select test_id, test_string from tblutf")
         result = rs.rows
@@ -643,8 +643,8 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testBinary(self):
-        peacesign_binary = "\xe2\x98\xae"
-        peacesign_binary2 = "\xe2\x98\xae" * 10
+        peacesign_binary = b"\xe2\x98\xae"
+        peacesign_binary2 = b"\xe2\x98\xae" * 10
 
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -664,8 +664,8 @@ class TestMySQL(unittest.TestCase):
 
 
     def testBlob(self):
-        peacesign_binary = "\xe2\x98\xae"
-        peacesign_binary2 = "\xe2\x98\xae" * 1024
+        peacesign_binary = b"\xe2\x98\xae"
+        peacesign_binary2 = b"\xe2\x98\xae" * 1024
 
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -684,9 +684,9 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testCharsets(self):
-        aumlaut_unicode = u"\u00e4"
-        aumlaut_utf8 = "\xc3\xa4"
-        aumlaut_latin1 = "\xe4"
+        aumlaut_unicode = "\u00e4"
+        aumlaut_utf8 = b"\xc3\xa4"
+        aumlaut_latin1 = b"\xe4"
 
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -702,7 +702,7 @@ class TestMySQL(unittest.TestCase):
         cnn.query("insert into tblutf (test_mode, test_utf, test_latin1) values ('latin1', _utf8'" + aumlaut_utf8 + "', _latin1'" + aumlaut_latin1 + "')")
 
         # We expect the driver to always give us unicode strings back
-        expected = [(u"utf8", aumlaut_unicode, aumlaut_unicode), (u"latin1", aumlaut_unicode, aumlaut_unicode)]
+        expected = [("utf8", aumlaut_unicode, aumlaut_unicode), ("latin1", aumlaut_unicode, aumlaut_unicode)]
 
         # Fetch and test with different charsets
         for charset in ("latin1", "utf8", "cp1250"):
@@ -714,9 +714,9 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testTextCharsets(self):
-        aumlaut_unicode = u"\u00e4"
-        aumlaut_utf8 = "\xc3\xa4"
-        aumlaut_latin1 = "\xe4"
+        aumlaut_unicode = "\u00e4"
+        aumlaut_utf8 = b"\xc3\xa4"
+        aumlaut_latin1 = b"\xe4"
 
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
@@ -732,7 +732,7 @@ class TestMySQL(unittest.TestCase):
         cnn.query("insert into tblutf (test_mode, test_utf, test_latin1) values ('latin1', _utf8'" + aumlaut_utf8 + "', _latin1'" + aumlaut_latin1 + "')")
 
         # We expect the driver to always give us unicode strings back
-        expected = [(u"utf8", aumlaut_unicode, aumlaut_unicode), (u"latin1", aumlaut_unicode, aumlaut_unicode)]
+        expected = [("utf8", aumlaut_unicode, aumlaut_unicode), ("latin1", aumlaut_unicode, aumlaut_unicode)]
 
         # Fetch and test with different charsets
         for charset in ("latin1", "utf8", "cp1250"):
@@ -744,7 +744,7 @@ class TestMySQL(unittest.TestCase):
         cnn.close()
 
     def testUtf8mb4(self):
-        utf8mb4chr = u'\U0001f603'
+        utf8mb4chr = '\U0001f603'
 
         # We expected we can insert utf8mb4 character, than fetch it back
         cnn = umysql.Connection()
@@ -773,14 +773,14 @@ class TestMySQL(unittest.TestCase):
         cnn = umysql.Connection()
         cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
         rs = cnn.query("SELECT * FROM `tblautoincint` WHERE `test_id` LIKE '%%10%%'")
-        self.assertEqual([(100, u'piet'), (101, u'piet')], rs.rows)
+        self.assertEqual([(100, 'piet'), (101, 'piet')], rs.rows)
 
         rs = cnn.query("SELECT * FROM `tblautoincint` WHERE `test_id` LIKE '%%%s%%'", [10])
-        self.assertEqual([(100, u'piet'), (101, u'piet')], rs.rows)
+        self.assertEqual([(100, 'piet'), (101, 'piet')], rs.rows)
 
         # SqlAlchemy query style
         rs = cnn.query("SELECT * FROM `tblautoincint` WHERE `test_id` LIKE concat(concat('%%', %s), '%%')", [10])
-        self.assertEqual([(100, u'piet'), (101, 'piet')], rs.rows)
+        self.assertEqual([(100, 'piet'), (101, 'piet')], rs.rows)
 
         cnn.close()
 

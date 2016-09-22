@@ -68,10 +68,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define snprintf _snprintf
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
-#define PRINTMARK() 		
+//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)
+#define PRINTMARK()
 
-Connection::Connection (UMConnectionCAPI *_capi) 
+Connection::Connection (UMConnectionCAPI *_capi)
   :	m_reader(MYSQL_RX_BUFFER_SIZE)
   , m_writer(MYSQL_TX_BUFFER_SIZE)
 {
@@ -127,7 +127,7 @@ void Connection::scramble(const char *_scramble1, const char *_scramble2, UINT8 
 
   for (int index = 0; index < 20; index ++)
   {
-    _outToken[index] = final_hash[index] ^ stage1_hash[index]; 
+    _outToken[index] = final_hash[index] ^ stage1_hash[index];
   }
 }
 
@@ -135,7 +135,7 @@ void Connection::scramble(const char *_scramble1, const char *_scramble2, UINT8 
 bool Connection::readSocket()
 {
   size_t bytesToRecv = m_reader.getEndPtr() - m_reader.getWritePtr();
-  assert (bytesToRecv <= m_reader.getEndPtr() - m_reader.getWritePtr()); 
+  assert (bytesToRecv <= m_reader.getEndPtr() - m_reader.getWritePtr());
 
   if (bytesToRecv == 0)
   {
@@ -207,7 +207,7 @@ bool Connection::close(void)
       m_writer.finalize(0);
 
       if (!sendPacket())
-      {	
+      {
         m_capi.clearException();
       }
     }
@@ -757,14 +757,12 @@ void *Connection::query(const char *_query, size_t _cbQuery)
     m_dbgMethodProgress --;
     return NULL;
   }
-
   if (!recvPacket())
   {
     PRINTMARK();
     m_dbgMethodProgress --;
     return NULL;
   }
-
   UINT8 result = m_reader.readByte();
 
   switch (result)
