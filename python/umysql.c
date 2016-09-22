@@ -1017,13 +1017,13 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
      * obj belongs to bytes. So Changing PyString_AS_STRING to
      * PyBytes_AS_STRING
      */
-     // printf("Error 5.2.7.8.2\n");
+    // printf("Error 5.2.7.8.2\n");
     return AppendAndEscapeString(start, end, PyBytes_AS_STRING(obj), PyBytes_AS_STRING(obj) + PyBytes_GET_SIZE(obj), TRUE);
   }
   else
     if (PyUnicode_Check(obj))
     {
-        // printf("Error 5.2.7.8.3\n");
+        //printf("Error 5.2.7.8.3\n");
       PRINTMARK();
 
       /*
@@ -1090,6 +1090,12 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
 
             return len;
           }
+          else if(PyLong_Check(obj)) {
+              strobj = PyObject_Str(obj);
+              ret = AppendAndEscapeString(start, end, PyUnicode_AsUTF8(strobj), PyUnicode_AsUTF8(strobj) + PyUnicode_GET_SIZE(strobj), FALSE);
+              Py_DECREF(strobj);
+              return ret;
+          }
 
           //FIXME: Might possible to avoid this?
           PRINTMARK();
@@ -1100,6 +1106,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
            * Changed to: PyObject_Bytes
            */
            // printf("Error 5.2.7.8.11 obj = %d\n", obj);
+
           strobj = PyObject_Str(obj);
 
           /*
@@ -1229,9 +1236,15 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
         return PyErr_Format (PyExc_ValueError, "Unexpected end of iterator found");
       }
 
+    //   PyObject_Print(arg, stdout ,Py_PRINT_RAW);
+    //   printf("\n");
+
       // printf("Error 5.2.7.8\n");
       appendLen = AppendEscapedArg(self, optr, obuffer + cbOutQuery, arg);
-      // printf("Error 5.2.7.9\n");
+
+    //   printf("obuffer = %s\n", obuffer);
+      //
+    //   // printf("Error 5.2.7.9\n");
       Py_DECREF(arg);
 
       if (appendLen == -1)
@@ -1260,7 +1273,7 @@ END_PARSE:
    * Previous was PyString_FromStringAndSize
    * Setting it to PyBytes_FromStringAndSize
    */
-  retobj = PyBytes_FromStringAndSize (obuffer, (optr - obuffer));
+  retobj = PyBytes_FromStringAndSize(obuffer, (optr - obuffer));
   // printf("Error 5.2.9\n");
   if (heap)
   {

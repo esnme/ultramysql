@@ -715,6 +715,7 @@ void *Connection::handleResultPacket(int _fieldCount)
 
 void *Connection::query(const char *_query, size_t _cbQuery)
 {
+    printf("Query => %s\n",_query);
   m_dbgMethodProgress ++;
 
   if (m_dbgMethodProgress > 1)
