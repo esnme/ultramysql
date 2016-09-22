@@ -85,7 +85,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import with_statement
 
 import time
-import gevent
 import datetime
 import logging
 import unittest
@@ -217,24 +216,24 @@ class TestMySQL(unittest.TestCase):
     #     self.assertTrue(errorCount[0] > 0)
     #     connection.close()
 
-    def testConcurrentConnectError(self):
-        connection = umysql.Connection()
-        errorCount = [ 0 ]
-
-        def query(cnn):
-            try:
-                cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
-            except(umysql.Error):
-                errorCount[0] = errorCount[0] + 1
-                return
-
-        ch1 = gevent.spawn(query, connection)
-        ch2 = gevent.spawn(query, connection)
-        ch3 = gevent.spawn(query, connection)
-        gevent.joinall([ch1, ch2, ch3])
-
-        self.assertTrue(errorCount[0] > 0)
-        connection.close()
+    # def testConcurrentConnectError(self):
+    #     connection = umysql.Connection()
+    #     errorCount = [ 0 ]
+    #
+    #     def query(cnn):
+    #         try:
+    #             cnn.connect (DB_HOST, 3306, DB_USER, DB_PASSWD, DB_DB)
+    #         except(umysql.Error):
+    #             errorCount[0] = errorCount[0] + 1
+    #             return
+    #
+    #     ch1 = gevent.spawn(query, connection)
+    #     ch2 = gevent.spawn(query, connection)
+    #     ch3 = gevent.spawn(query, connection)
+    #     gevent.joinall([ch1, ch2, ch3])
+    #
+    #     self.assertTrue(errorCount[0] > 0)
+    #     connection.close()
 
     # def testMySQLTimeout(self):
     #     cnn = umysql.Connection()

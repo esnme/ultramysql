@@ -21,5 +21,6 @@ cp build/lib.linux-x86_64-2.7/* .
 ## Running tests
 ```
 cd tests
+mysql -u root < testdb.sql
 python -m unittest tests.TestMySQL
 ```
