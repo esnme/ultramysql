@@ -1,4 +1,28 @@
 /*
+Copyright (c) 2016, Arpit Bhayani
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+3. The name of Arpit Bhayani may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY ARPIT BHAYANI "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 Copyright (c) 2011, Jonas Tarnstrom and ESN Social Software AB
 All rights reserved.
 
@@ -85,8 +109,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define alloca _alloca
 #endif
 
-//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)		
-#define PRINTMARK() 		
+//#define PRINTMARK() fprintf(stderr, "%08x:%s:%s MARK(%d)\n", GetTickCount(), __FILE__, __FUNCTION__, __LINE__)
+#define PRINTMARK()
 
 
 static PyTypeObject ConnectionType;
@@ -97,7 +121,7 @@ PyObject *umysql_SQLError;
 
 typedef struct {
   PyObject_HEAD
-    PyObject *fields; 
+    PyObject *fields;
   PyObject *rows;
   PyObject *currRow;
   int numFields;
@@ -146,8 +170,14 @@ void *API_createResult(int columns)
 void API_resultSetField(void *result, int column, UMTypeInfo *ti, void *_name, size_t _cbName)
 {
   PyObject *field = PyTuple_New(2);
-  PyTuple_SET_ITEM(field, 0, PyString_FromStringAndSize((const char *)_name, _cbName));
-  PyTuple_SET_ITEM(field, 1, PyInt_FromLong(ti->type));
+
+  /*
+   * INVESTIGATE:
+   * Previous was PyString_FromStringAndSize
+   * Setting it to PyUnicode_FromStringAndSize
+   */
+  PyTuple_SET_ITEM(field, 0, PyUnicode_FromStringAndSize((const char *)_name, _cbName));
+  PyTuple_SET_ITEM(field, 1, PyLong_FromLong(ti->type));
   PyTuple_SET_ITEM(((ResultSet *) result)->fields, column, field);
   PRINTMARK();
   return;
@@ -156,7 +186,7 @@ void API_resultSetField(void *result, int column, UMTypeInfo *ti, void *_name, s
 void API_resultRowBegin(void *result)
 {
   PRINTMARK();
-  ((ResultSet *)result)->currRow = PyTuple_New(((ResultSet *)result)->numFields);	
+  ((ResultSet *)result)->currRow = PyTuple_New(((ResultSet *)result)->numFields);
   PRINTMARK();
 }
 
@@ -506,7 +536,12 @@ static PyObject *DecodeString (UMTypeInfo *ti, char *value, size_t cbValue)
     break;
 
   case MCS_binary:
-    return PyString_FromStringAndSize(value, cbValue);
+      /*
+       * INVESTIGATE:
+       * Previous was PyString_FromStringAndSize
+       * Setting it to PyBytes_FromStringAndSize
+       */
+    return PyBytes_FromStringAndSize(value, cbValue);
 
   default:
     break;
@@ -553,7 +588,7 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_SHORT:
     case MFTYPE_INT24:
       {
-        valobj = PyInt_FromLong(parseINT32 (value, ((char *) value) + cbValue));
+        valobj = PyLong_FromLong(parseINT32 (value, ((char *) value) + cbValue));
         break;
       }
 
@@ -573,8 +608,13 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_DOUBLE:
       {
         //FIXME: Too fucking slow
-        PyObject *sobj = PyString_FromStringAndSize((char *) value, cbValue);
-        valobj = PyFloat_FromString (sobj, NULL);
+        /*
+         * INVESTIGATE:
+         * Previous was PyString_FromStringAndSize
+         * Setting it to PyUnicode_FromStringAndSize
+         */
+        PyObject *sobj = PyUnicode_FromStringAndSize((char *) value, cbValue);
+        valobj = PyFloat_FromString (sobj);
         Py_DECREF(sobj);
         break;
       }
@@ -657,7 +697,11 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_LONG_BLOB:
     case MFTYPE_BLOB:
       if (ti->flags & MFFLAG_BINARY_FLAG) {
-        valobj = PyString_FromStringAndSize( (const char *) value, cbValue);
+          /*
+           * Blobs are returned as str and not bytes. Hence rconverting it to
+           * unicode instead of bytes.
+           */
+        valobj = PyUnicode_FromStringAndSize( (const char *) value, cbValue);
       } else {
         valobj = DecodeString (ti, value, cbValue);
       }
@@ -677,7 +721,12 @@ int API_resultRowValue(void *result, int column, UMTypeInfo *ti, char *value, si
     case MFTYPE_SET:
     case MFTYPE_DECIMAL:
       // Fall through for string encoding
-      valobj = PyString_FromStringAndSize( (const char *) value, cbValue);
+      /*
+       * INVESTIGATE:
+       * Previous was PyString_FromStringAndSize
+       * Setting it to PyBytes_FromStringAndSize
+       */
+      valobj = PyBytes_FromStringAndSize( (const char *) value, cbValue);
       break;
 
     }
@@ -756,7 +805,7 @@ PyObject *Connection_setTimeout(Connection *self, PyObject *args)
   }
 
   Py_RETURN_NONE;
-}	
+}
 
 
 PyObject *Connection_isConnected(Connection *self, PyObject *args)
@@ -982,15 +1031,25 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
   FIXME: Surround strings with '' could be performed in this function to avoid extra logic in AppendAndEscapeString */
   PRINTMARK();
 
-  if (PyString_Check(obj))
+  if (PyBytes_Check(obj))
   {
     PRINTMARK();
-    return AppendAndEscapeString(start, end, PyString_AS_STRING(obj), PyString_AS_STRING(obj) + PyString_GET_SIZE(obj), TRUE);
+    /*
+     * Since method AppendAndEscapeString accepts a char * and
+     * obj belongs to bytes. So Changing PyString_AS_STRING to
+     * PyBytes_AS_STRING
+     */
+    return AppendAndEscapeString(start, end, PyBytes_AS_STRING(obj), PyBytes_AS_STRING(obj) + PyBytes_GET_SIZE(obj), TRUE);
   }
   else
     if (PyUnicode_Check(obj))
     {
       PRINTMARK();
+
+      /*
+       * If the obj is a unicode object then converting it to char * with
+       * appropriate decoder passed as a function pointer.
+       */
       strobj = self->PFN_PyUnicode_Encode(PyUnicode_AS_UNICODE(obj), PyUnicode_GET_SIZE(obj), NULL);
 
       if (strobj == NULL)
@@ -999,15 +1058,17 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
         {
           return -1;
         }
-
         PyErr_SetObject (PyExc_ValueError, obj);
         return -1;
       }
 
-
-      ret = AppendAndEscapeString(start, end, PyString_AS_STRING(strobj), PyString_AS_STRING(strobj) + PyString_GET_SIZE(strobj), TRUE);
+      /*
+       * Since method AppendAndEscapeString accepts a char * and
+       * strobj belongs to bytes. So Changing PyString_AS_STRING to
+       * PyBytes_AS_STRING
+       */
+      ret = AppendAndEscapeString(start, end, PyBytes_AS_STRING(strobj), PyBytes_AS_STRING(strobj) + PyBytes_GET_SIZE(strobj), TRUE);
       Py_DECREF(strobj);
-
       return ret;
     }
     else
@@ -1022,7 +1083,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
       else
         if (PyDateTime_Check(obj))
         {
-          int len = sprintf (start, "'%04d-%02d-%02d %02d:%02d:%02d'", 
+          int len = sprintf (start, "'%04d-%02d-%02d %02d:%02d:%02d'",
             PyDateTime_GET_YEAR(obj),
             PyDateTime_GET_MONTH(obj),
             PyDateTime_GET_DAY(obj),
@@ -1035,18 +1096,38 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
         else
           if (PyDate_Check(obj))
           {
-            int len = sprintf (start, "'%04d:%02d:%02d'", 
+            int len = sprintf (start, "'%04d:%02d:%02d'",
               PyDateTime_GET_YEAR(obj),
               PyDateTime_GET_MONTH(obj),
               PyDateTime_GET_DAY(obj));
 
             return len;
           }
+          else if(PyLong_Check(obj)) {
+              strobj = PyObject_Str(obj);
+              ret = AppendAndEscapeString(start, end, PyUnicode_AsUTF8(strobj), PyUnicode_AsUTF8(strobj) + PyUnicode_GET_SIZE(strobj), FALSE);
+              Py_DECREF(strobj);
+              return ret;
+          }
 
           //FIXME: Might possible to avoid this?
           PRINTMARK();
+
+          /*
+           * This method gives the string representation of the python object.
+           * Previous: PyObject_Str
+           * Changed to: PyObject_Bytes
+           */
+
           strobj = PyObject_Str(obj);
-          ret = AppendAndEscapeString(start, end, PyString_AS_STRING(strobj), PyString_AS_STRING(strobj) + PyString_GET_SIZE(strobj), FALSE);
+
+          /*
+           * Since method AppendAndEscapeString accepts a char * and
+           * strobj belongs to Unicode. So Changing PyString_AS_STRING to
+           * PyUnicode_AS_DATA which returns char *.
+           * https://docs.python.org/3.4/c-api/unicode.html#c.PyUnicode_AS_DATA
+           */
+          ret = AppendAndEscapeString(start, end, PyUnicode_AS_DATA(strobj), PyUnicode_AS_DATA(strobj) + PyUnicode_GET_SIZE(strobj), FALSE);
           Py_DECREF(strobj);
           return ret;
 }
@@ -1066,7 +1147,10 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
   // Estimate output length
 
-  cbOutQuery += PyString_GET_SIZE(inQuery);
+  /*
+   * Since inQuery is bytes object
+   */
+  cbOutQuery += PyBytes_GET_SIZE(inQuery);
 
   iterator = PyObject_GetIter(iterable);
 
@@ -1076,8 +1160,11 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
     cbOutQuery += 2;
 
     // Worst case escape and utf-8
-    if (PyString_Check(arg))
-      cbOutQuery += (PyString_GET_SIZE(arg) * 2);
+    /*
+     * Replacing PyString_Check with PyBytes_Check
+     */
+    if (PyBytes_Check(arg))
+      cbOutQuery += (PyBytes_GET_SIZE(arg) * 2);
     else
       if (PyUnicode_Check(arg))
         cbOutQuery += (PyUnicode_GET_SIZE(arg) * 6);
@@ -1101,12 +1188,15 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
     obuffer = (char *) alloca (cbOutQuery);
   }
 
-
   optr = obuffer;
-  iptr = PyString_AS_STRING(inQuery);
+
+  /*
+   * inQuery is already bytes so converting it to char * using
+   * PyBytes_AS_STRING
+   */
+  iptr = PyBytes_AS_STRING(inQuery);
 
   hasArg = 0;
-
 
   iterator = PyObject_GetIter(iterable);
 
@@ -1120,7 +1210,6 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
     case '%':
 
       iptr ++;
-
       if (*iptr != 's' && *iptr != '%')
       {
         Py_DECREF(iterator);
@@ -1135,9 +1224,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
       }
 
       iptr ++;
-
       arg = PyIter_Next(iterator);
-
       if (arg == NULL)
       {
         Py_DECREF(iterator);
@@ -1146,6 +1233,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
       }
 
       appendLen = AppendEscapedArg(self, optr, obuffer + cbOutQuery, arg);
+
       Py_DECREF(arg);
 
       if (appendLen == -1)
@@ -1154,7 +1242,6 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
         if (heap) PyObject_Free(obuffer);
         return NULL;
       }
-
       optr += appendLen;
 
       break;
@@ -1165,17 +1252,18 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
     }
   }
 
-
 END_PARSE:
   Py_DECREF(iterator);
-
-  retobj = PyString_FromStringAndSize (obuffer, (optr - obuffer));
-
+  /*
+   * INVESTIGATE:
+   * Previous was PyString_FromStringAndSize
+   * Setting it to PyBytes_FromStringAndSize
+   */
+  retobj = PyBytes_FromStringAndSize(obuffer, (optr - obuffer));
   if (heap)
   {
     PyObject_Free(obuffer);
   }
-
   return retobj;
 }
 
@@ -1212,7 +1300,10 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     Py_DECREF(iterator);
   }
 
-  if (!PyString_Check(inQuery))
+  /*
+   * Replacing PyString_Check with PyBytes_Check
+   */
+  if (!PyBytes_Check(inQuery))
   {
     if (!PyUnicode_Check(inQuery))
     {
@@ -1244,7 +1335,6 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     PRINTMARK();
     escapedQuery = EscapeQueryArguments(self, query, iterable);
     Py_DECREF(query);
-
     if (escapedQuery == NULL)
     {
       if (!PyErr_Occurred())
@@ -1261,7 +1351,11 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     escapedQuery = query;
   }
 
-  ret =  UMConnection_Query(self->conn, PyString_AS_STRING(escapedQuery), PyString_GET_SIZE(escapedQuery));
+  /*
+   * escapedQueryis already PyBytes. So changing PyString_AS_STRING to
+   * PyBytes_AS_STRING
+   */
+  ret =  UMConnection_Query(self->conn, PyBytes_AS_STRING(escapedQuery), PyBytes_GET_SIZE(escapedQuery));
 
   Py_DECREF(escapedQuery);
 
@@ -1313,9 +1407,8 @@ static PyMemberDef Connection_members[] = {
 
 
 
-static PyTypeObject ConnectionType = { 
-  PyObject_HEAD_INIT(NULL)
-  0,				/* ob_size        */
+static PyTypeObject ConnectionType = {
+  PyVarObject_HEAD_INIT(NULL, 0)
   "umysql.Connection",		/* tp_name        */
   sizeof(Connection),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
@@ -1409,9 +1502,8 @@ static PyMemberDef ResultSet_members[] = {
   {NULL}
 };
 
-static PyTypeObject ResultSetType = { 
-  PyObject_HEAD_INIT(NULL)
-  0,				/* ob_size        */
+static PyTypeObject ResultSetType = {
+  PyVarObject_HEAD_INIT(NULL, 0)
   "umysql.ResultSet",		/* tp_name        */
   sizeof(ResultSet),		/* tp_basicsize   */
   0,				/* tp_itemsize    */
@@ -1453,34 +1545,48 @@ static PyMethodDef methods[] = {
   {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "umysql3",     /* m_name */
+    "This is Python3 compatible umysql porting",  /* m_doc */
+    -1,                  /* m_size */
+    methods,    /* m_methods */
+    NULL,                /* m_reload */
+    NULL,                /* m_traverse */
+    NULL,                /* m_clear */
+    NULL,                /* m_free */
+ };
+
 PyMODINIT_FUNC
-  initumysql(void) 
+  PyInit_umysql3(void)
 {
   PyObject* m;
   PyObject *dict;
   PyDateTime_IMPORT;
 
-  m = Py_InitModule3("umysql", methods, "");
+  m = PyModule_Create(&moduledef);
   if (m == NULL)
-    return;
+    return NULL;
 
   dict = PyModule_GetDict(m);
 
   ConnectionType.tp_new = PyType_GenericNew;
   if (PyType_Ready(&ConnectionType) < 0)
-    return;
+    return NULL;
   Py_INCREF(&ConnectionType);
   PyModule_AddObject(m, "Connection", (PyObject *)&ConnectionType);
 
   ResultSetType.tp_new = PyType_GenericNew;
   if (PyType_Ready(&ResultSetType) < 0)
-    return;
+    return NULL;
   Py_INCREF(&ResultSetType);
   PyModule_AddObject(m, "ResultSet", (PyObject *)&ResultSetType);
 
-  umysql_Error = PyErr_NewException("umysql.Error", PyExc_StandardError, NULL);
+  umysql_Error = PyErr_NewException("umysql.Error", PyExc_Exception, NULL);
   umysql_SQLError = PyErr_NewException("umysql.SQLError", umysql_Error, NULL);
 
   PyDict_SetItemString(dict, "Error", umysql_Error);
   PyDict_SetItemString(dict, "SQLError", umysql_SQLError);
+
+  return m;
 }
