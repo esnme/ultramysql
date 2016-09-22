@@ -934,7 +934,6 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
 
 int AppendAndEscapeString(char *buffStart, char *buffEnd, const char *strStart, const char *strEnd, int quote)
 {
-    // printf("5.2.7.8.12.1\n");
   //{'\0': '\\0', '\n': '\\n', '\r': '\\r', '\\': '\\\\', "'": "\\'", '"': '\\"', '\x1a': '\\Z'}):
   char *buffOffset = buffStart;
 
@@ -1008,7 +1007,6 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
   FIXME: Surround strings with '' could be performed in this function to avoid extra logic in AppendAndEscapeString */
   PRINTMARK();
 
-  // printf("Error 5.2.7.8.1\n");
   if (PyBytes_Check(obj))
   {
     PRINTMARK();
@@ -1017,13 +1015,11 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
      * obj belongs to bytes. So Changing PyString_AS_STRING to
      * PyBytes_AS_STRING
      */
-    // printf("Error 5.2.7.8.2\n");
     return AppendAndEscapeString(start, end, PyBytes_AS_STRING(obj), PyBytes_AS_STRING(obj) + PyBytes_GET_SIZE(obj), TRUE);
   }
   else
     if (PyUnicode_Check(obj))
     {
-        //printf("Error 5.2.7.8.3\n");
       PRINTMARK();
 
       /*
@@ -1032,14 +1028,12 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
        */
       strobj = self->PFN_PyUnicode_Encode(PyUnicode_AS_UNICODE(obj), PyUnicode_GET_SIZE(obj), NULL);
 
-      // printf("Error 5.2.7.8.4\n");
       if (strobj == NULL)
       {
         if (PyErr_Occurred())
         {
           return -1;
         }
-        // printf("Error 5.2.7.8.5\n");
         PyErr_SetObject (PyExc_ValueError, obj);
         return -1;
       }
@@ -1049,17 +1043,13 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
        * strobj belongs to bytes. So Changing PyString_AS_STRING to
        * PyBytes_AS_STRING
        */
-       // printf("Error 5.2.7.8.6\n");
       ret = AppendAndEscapeString(start, end, PyBytes_AS_STRING(strobj), PyBytes_AS_STRING(strobj) + PyBytes_GET_SIZE(strobj), TRUE);
-      // printf("Error 5.2.7.8.7\n");
       Py_DECREF(strobj);
-      // printf("Error 5.2.7.8.8\n");
       return ret;
     }
     else
       if (obj == Py_None)
       {
-          // printf("Error 5.2.7.8.9\n");
         (*start++) = 'n';
         (*start++) = 'u';
         (*start++) = 'l';
@@ -1069,7 +1059,6 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
       else
         if (PyDateTime_Check(obj))
         {
-            // printf("Error 5.2.7.8.10\n");
           int len = sprintf (start, "'%04d-%02d-%02d %02d:%02d:%02d'",
             PyDateTime_GET_YEAR(obj),
             PyDateTime_GET_MONTH(obj),
@@ -1105,7 +1094,6 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
            * Previous: PyObject_Str
            * Changed to: PyObject_Bytes
            */
-           // printf("Error 5.2.7.8.11 obj = %d\n", obj);
 
           strobj = PyObject_Str(obj);
 
@@ -1115,9 +1103,7 @@ int AppendEscapedArg (Connection *self, char *start, char *end, PyObject *obj)
            * PyUnicode_AS_DATA which returns char *.
            * https://docs.python.org/3.4/c-api/unicode.html#c.PyUnicode_AS_DATA
            */
-           // printf("Error 5.2.7.8.12 strobj = %d\n", strobj);
           ret = AppendAndEscapeString(start, end, PyUnicode_AS_DATA(strobj), PyUnicode_AS_DATA(strobj) + PyUnicode_GET_SIZE(strobj), FALSE);
-          // printf("Error 5.2.7.8.13\n");
           Py_DECREF(strobj);
           return ret;
 }
@@ -1137,16 +1123,13 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
   // Estimate output length
 
-  // printf("Error 5.2.1\n");
   /*
    * Since inQuery is bytes object
    */
   cbOutQuery += PyBytes_GET_SIZE(inQuery);
 
-  // printf("Error 5.2.2\n");
   iterator = PyObject_GetIter(iterable);
 
-  // printf("Error 5.2.3\n");
   while ( (arg = PyIter_Next(iterator)))
   {
     // Quotes;
@@ -1167,7 +1150,6 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
     Py_DECREF(arg);
   }
 
-  // printf("Error 5.2.4\n");
   Py_DECREF(iterator);
 
   if (cbOutQuery > (1024 * 64))
@@ -1182,7 +1164,6 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
     obuffer = (char *) alloca (cbOutQuery);
   }
 
-  // printf("Error 5.2.5\n");
   optr = obuffer;
 
   /*
@@ -1191,10 +1172,8 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
    */
   iptr = PyBytes_AS_STRING(inQuery);
 
-  // printf("Error 5.2.6\n");
   hasArg = 0;
 
-  // printf("Error 5.2.7\n");
   iterator = PyObject_GetIter(iterable);
 
   while (1)
@@ -1206,11 +1185,9 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
     case '%':
 
-        // printf("Error 5.2.7.1\n");
       iptr ++;
       if (*iptr != 's' && *iptr != '%')
       {
-          // printf("Error 5.2.7.2\n");
         Py_DECREF(iterator);
         if (heap) PyObject_Free(obuffer);
         return PyErr_Format (PyExc_ValueError, "Found character %c expected %%", *iptr);
@@ -1218,43 +1195,29 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
       if (*iptr == '%')
       {
-          // printf("Error 5.2.7.3\n");
         *(optr++) = *(iptr)++;
         break;
       }
 
       iptr ++;
-      // printf("Error 5.2.7.4\n");
       arg = PyIter_Next(iterator);
-      // printf("Error 5.2.7.5\n");
       if (arg == NULL)
       {
-          // printf("Error 5.2.7.6\n");
         Py_DECREF(iterator);
         if (heap) PyObject_Free(obuffer);
-        // printf("Error 5.2.7.7\n");
         return PyErr_Format (PyExc_ValueError, "Unexpected end of iterator found");
       }
 
-    //   PyObject_Print(arg, stdout ,Py_PRINT_RAW);
-    //   printf("\n");
-
-      // printf("Error 5.2.7.8\n");
       appendLen = AppendEscapedArg(self, optr, obuffer + cbOutQuery, arg);
 
-    //   printf("obuffer = %s\n", obuffer);
-      //
-    //   // printf("Error 5.2.7.9\n");
       Py_DECREF(arg);
 
       if (appendLen == -1)
       {
-          // printf("Error 5.2.7.10\n");
         Py_DECREF(iterator);
         if (heap) PyObject_Free(obuffer);
         return NULL;
       }
-      // printf("Error 5.2.7.11\n");
       optr += appendLen;
 
       break;
@@ -1267,19 +1230,16 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
 
 END_PARSE:
   Py_DECREF(iterator);
-  // printf("Error 5.2.8\n");
   /*
    * INVESTIGATE:
    * Previous was PyString_FromStringAndSize
    * Setting it to PyBytes_FromStringAndSize
    */
   retobj = PyBytes_FromStringAndSize(obuffer, (optr - obuffer));
-  // printf("Error 5.2.9\n");
   if (heap)
   {
     PyObject_Free(obuffer);
   }
-  // printf("Error 5.2.10\n");
   return retobj;
 }
 
@@ -1293,19 +1253,16 @@ PyObject *Connection_query(Connection *self, PyObject *args)
   PyObject *iterable = NULL;
   PyObject *escapedQuery = NULL;
 
-  // printf("Error 1\n");
   if (!UMConnection_IsConnected(self->conn))
   {
     return PyErr_Format(PyExc_RuntimeError, "Not connected");
   }
 
-  // printf("Error 2\n");
   if (!PyArg_ParseTuple (args, "O|O", &inQuery, &iterable))
   {
     return NULL;
   }
 
-  // printf("Error 3\n");
   if (iterable)
   {
     PyObject *iterator = PyObject_GetIter(iterable);
@@ -1319,7 +1276,6 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     Py_DECREF(iterator);
   }
 
-  // printf("Error 4\n");
   /*
    * Replacing PyString_Check with PyBytes_Check
    */
@@ -1350,16 +1306,11 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     Py_INCREF(query);
   }
 
-  // printf("Error 5\n");
   if (iterable)
   {
-      // printf("Error 5.1\n");
     PRINTMARK();
-    // printf("Error 5.2\n");
     escapedQuery = EscapeQueryArguments(self, query, iterable);
-    // printf("Error 5.3\n");
     Py_DECREF(query);
-    // printf("Error 5.4\n");
     if (escapedQuery == NULL)
     {
       if (!PyErr_Occurred())
@@ -1376,14 +1327,12 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     escapedQuery = query;
   }
 
-  // printf("Error 6\n");
   /*
    * escapedQueryis already PyBytes. So changing PyString_AS_STRING to
    * PyBytes_AS_STRING
    */
   ret =  UMConnection_Query(self->conn, PyBytes_AS_STRING(escapedQuery), PyBytes_GET_SIZE(escapedQuery));
 
-  // printf("Error 7\n");
   Py_DECREF(escapedQuery);
 
   PRINTMARK();
@@ -1392,7 +1341,6 @@ PyObject *Connection_query(Connection *self, PyObject *args)
     return HandleError(self, "query");
   }
 
-  // printf("Error 8\n");
   PRINTMARK();
   return (PyObject *) ret;
 }
