@@ -96,6 +96,22 @@ void PacketReader::skip()
   }
 }
 
+void PacketReader::defrag(void)
+{
+  if (m_writeCursor == m_buffEnd && m_readCursor > m_buffStart) {
+	  assert (m_packetEnd == NULL);
+	  size_t bytesToCopy = m_writeCursor - m_readCursor;
+	  //fprintf(stderr, "%s: Transferring %zu bytes to beginning\n", __FUNCTION__, bytesToCopy);
+	  memmove(m_buffStart, m_readCursor, bytesToCopy);
+	  assert (*m_buffStart == *m_readCursor);
+	  assert (m_buffStart[1] == m_readCursor[1]);
+	  m_readCursor = m_buffStart;
+	  m_writeCursor = m_buffStart + bytesToCopy;
+	  memset(m_writeCursor + 1, 0, m_buffEnd - m_writeCursor - 1);
+  }
+
+}
+
 void PacketReader::push(size_t _cbData)
 {
   //fprintf (stderr, "%s: Pushing %u bytes\n", __FUNCTION__, _cbData);
@@ -249,20 +265,20 @@ UINT8 *PacketReader::readLengthCodedBinary(size_t *_outLen)
   case 252:
     m_readCursor ++;
     *_outLen = (size_t) *((UINT16 *) m_readCursor);
-    m_readCursor += 2; 
+    m_readCursor += 2;
     break;
 
   case 253:
     m_readCursor ++;
     *_outLen = (size_t) *((UINT32 *) m_readCursor);
     *_outLen &= 0xffffff;
-    m_readCursor += 3; 
+    m_readCursor += 3;
     break;
 
   case 254:
     m_readCursor ++;
     *_outLen = (size_t) *((UINT64 *) m_readCursor);
-    m_readCursor += 8; 
+    m_readCursor += 8;
     break;
   }
 
@@ -326,6 +342,3 @@ UINT64 PacketReader::readLengthCodedInteger()
 
   return ret;
 }
-
-
-
