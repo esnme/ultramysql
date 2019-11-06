@@ -68,6 +68,8 @@ License :: OSI Approved :: BSD License
 Programming Language :: Python
 Topic :: Database
 Topic :: Software Development :: Libraries :: Python Modules
+Programming Language :: Python :: Implementation :: CPython
+Programming Language :: Python :: Implementation :: PyPy
 """.splitlines()))
 
 """
@@ -75,13 +77,13 @@ try:
 	shutil.rmtree("./build")
 except(OSError):
 	pass
-"""    
-    
+"""
+
 libs = []
 
 if sys.platform != "win32":
     libs.append("stdc++")
-    
+
 if sys.platform == "win32":
     libs.append("ws2_32")
 
@@ -92,16 +94,16 @@ module1 = Extension('umysql',
                 library_dirs = [],
                 libraries=libs,
                 define_macros=[('WIN32_LEAN_AND_MEAN', None)])
-					
+
 setup (name = 'umysql',
-       version = "2.61",
+       version = "2.62.dev0",
        description = "Ultra fast MySQL driver for Python",
        ext_modules = [module1],
        author="Jonas Tarnstrom",
        author_email="jonas.tarnstrom@esn.me",
        download_url="http://github.com/esnme/ultramysql",
        license="BSD License",
-       platforms=['any'],	   
+       platforms=['any'],
 	   url="http://www.esn.me",
        classifiers=CLASSIFIERS,
-	   )       
+	   )

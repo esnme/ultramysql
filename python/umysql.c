@@ -769,11 +769,12 @@ PyObject *Connection_isConnected(Connection *self, PyObject *args)
   Py_RETURN_FALSE;
 }
 
+#ifndef PYPY_VERSION
 PyObject *PyUnicode_EncodeCP1250Helper(const Py_UNICODE *data, Py_ssize_t length, const char *errors)
 {
   return PyUnicode_Encode (data, length, "cp1250", errors);
 }
-
+#endif
 
 PyObject *HandleError(Connection *self, const char *funcName)
 {
@@ -878,8 +879,12 @@ PyObject *Connection_connect(Connection *self, PyObject *args)
         else
           if (strcmp (pstrCharset, "cp1250") == 0)
           {
+#ifndef PYPY_VERSION
             self->charset = MCS_cp1250_general_ci;
             self->PFN_PyUnicode_Encode = PyUnicode_EncodeCP1250Helper;
+#else
+            return PyErr_Format (PyExc_ValueError, "Unsupported character set '%s' specified", pstrCharset);
+#endif
           }
           else
             if (strcmp (pstrCharset, "utf8mb4") == 0)
@@ -1093,7 +1098,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
   {
     /*
     FIXME: Allocate a PyString and resize it just like the Python code does it */
-    obuffer = (char *) PyObject_Malloc(cbOutQuery);
+    obuffer = (char *) PyMem_Malloc(cbOutQuery);
     heap = 1;
   }
   else
@@ -1124,7 +1129,7 @@ PyObject *EscapeQueryArguments(Connection *self, PyObject *inQuery, PyObject *it
       if (*iptr != 's' && *iptr != '%')
       {
         Py_DECREF(iterator);
-        if (heap) PyObject_Free(obuffer);
+        if (heap) PyMem_Free(obuffer);
         return PyErr_Format (PyExc_ValueError, "Found character %c expected %%", *iptr);
       }
 

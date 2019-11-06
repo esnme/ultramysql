@@ -1,10 +1,12 @@
+:: WARNING ::
+This driver is no longer supported or recommended. See https://github.com/zodb/relstorage/issues/264
+
 :: Description ::
-A fast MySQL driver written in pure C/C++ for Python. 
+A fast MySQL driver written in pure C/C++ for Python.
 Compatible with gevent through monkey patching
 
 :: Requirements ::
-Requires Python (http://www.python.org) 
+Requires Python (http://www.python.org)
 
 :: Installation ::
 python setup.py build install
-
